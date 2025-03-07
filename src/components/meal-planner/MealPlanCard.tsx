@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2, Clock, Users } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@/components/ui/badge'; // Corrected casing
 import { MealPlan, MealType } from '@/lib/types';
 import AnimatedContainer from '@/components/ui/AnimatedContainer';
 

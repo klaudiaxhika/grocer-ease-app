@@ -41,6 +41,7 @@ export interface Recipe {
 
 export interface MealPlan {
   id: string;
+  date: string; // Added the date property
   day: WeekDay;
   mealType: MealType;
   recipe: Recipe;

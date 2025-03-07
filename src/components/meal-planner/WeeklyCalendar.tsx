@@ -1,8 +1,10 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { format, startOfWeek, addDays, isSameDay } from 'date-fns';
 import { MealPlan, MealType } from '@/lib/types';
+import { cn } from '@/lib/utils';
 
 interface WeeklyCalendarProps {
   selectedDate: Date;
@@ -10,128 +12,121 @@ interface WeeklyCalendarProps {
   mealPlans: MealPlan[];
 }
 
-// Define the colors for meal types
-const mealIndicatorColors: Record<MealType, string> = {
-  breakfast: 'bg-blue-400',
-  lunch: 'bg-green-400',
-  dinner: 'bg-purple-400',
-  snack: 'bg-yellow-400'
+interface DayProps {
+  day: Date;
+  isSelected: boolean;
+  onClick: () => void;
+  meals: { [key in MealType]?: number };
+}
+
+const mealTypeColors: Record<MealType, string> = {
+  breakfast: 'bg-blue-500',
+  lunch: 'bg-green-500',
+  dinner: 'bg-purple-500',
+  snack: 'bg-yellow-500',
 };
 
-const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({ 
-  selectedDate, 
-  onSelectDate, 
-  mealPlans 
-}) => {
-  // Get the current day and calculate the start of the week (Sunday)
-  const today = new Date();
-  const currentDay = new Date(selectedDate);
-  const dayOfWeek = currentDay.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+const Day: React.FC<DayProps> = ({ day, isSelected, onClick, meals }) => {
+  const dayNumber = format(day, 'd');
+  const dayName = format(day, 'EEE');
+  const isToday = isSameDay(day, new Date());
+
+  return (
+    <div 
+      className={cn(
+        "flex flex-col items-center justify-start pt-2 pb-1 rounded-lg transition-colors cursor-pointer relative",
+        isSelected ? "bg-primary text-primary-foreground" : "hover:bg-muted",
+        isToday && !isSelected && "ring-1 ring-primary"
+      )}
+      onClick={onClick}
+    >
+      <div className="text-xs font-medium mb-1">{dayName}</div>
+      <div className={cn("font-semibold text-lg mb-2", isSelected ? "text-primary-foreground" : "")}>{dayNumber}</div>
+      
+      {/* Meal indicators */}
+      <div className="flex gap-[3px] mb-1">
+        {Object.entries(meals).map(([type, count]) => (
+          count > 0 && (
+            <div 
+              key={type} 
+              className={cn(
+                "h-1.5 w-1.5 rounded-full",
+                mealTypeColors[type as MealType],
+                isSelected && "opacity-80"
+              )}
+              title={`${count} ${type} meal${count > 1 ? 's' : ''}`}
+            />
+          )
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({ selectedDate, onSelectDate, mealPlans }) => {
+  // Get start of current week (Sunday)
+  const startDate = startOfWeek(selectedDate);
   
-  // Move to the start of the week (Sunday)
-  const startOfWeek = new Date(currentDay);
-  startOfWeek.setDate(currentDay.getDate() - dayOfWeek);
-  
-  // Generate an array of 7 days starting from the start of the week
-  const daysOfWeek = [...Array(7)].map((_, i) => {
-    const date = new Date(startOfWeek);
-    date.setDate(startOfWeek.getDate() + i);
-    return date;
-  });
-  
-  // Function to navigate to previous week
-  const goToPreviousWeek = () => {
-    const newDate = new Date(startOfWeek);
-    newDate.setDate(startOfWeek.getDate() - 7);
-    onSelectDate(newDate);
-  };
-  
-  // Function to navigate to next week
-  const goToNextWeek = () => {
-    const newDate = new Date(startOfWeek);
-    newDate.setDate(startOfWeek.getDate() + 7);
-    onSelectDate(newDate);
-  };
-  
-  // Function to get meal indicators for a specific date
-  const getMealIndicators = (date: Date) => {
-    const mealsOnDate = mealPlans.filter(meal => {
+  // Generate the 7 days of the week
+  const weekDays = Array.from({ length: 7 }).map((_, i) => {
+    const day = addDays(startDate, i);
+    
+    // Count meals for each meal type on this day
+    const mealCounts: { [key in MealType]?: number } = {
+      breakfast: 0,
+      lunch: 0,
+      dinner: 0,
+      snack: 0
+    };
+    
+    mealPlans.forEach(meal => {
       const mealDate = new Date(meal.date);
-      return mealDate.toDateString() === date.toDateString();
+      if (isSameDay(day, mealDate)) {
+        mealCounts[meal.mealType] = (mealCounts[meal.mealType] || 0) + 1;
+      }
     });
     
-    const mealTypes = mealsOnDate.map(meal => meal.mealType);
-    // Remove duplicates
-    return [...new Set(mealTypes)];
+    return {
+      date: day,
+      isSelected: isSameDay(day, selectedDate),
+      meals: mealCounts
+    };
+  });
+  
+  const handlePrevWeek = () => {
+    const newDate = addDays(startDate, -7);
+    onSelectDate(newDate);
   };
   
-  // Format the month and year for the header
-  const formattedMonth = startOfWeek.toLocaleDateString('en-US', { month: 'long' });
-  const formattedYear = startOfWeek.getFullYear();
-  
-  // Check if the end of the week is in a different month
-  const endOfWeek = new Date(startOfWeek);
-  endOfWeek.setDate(startOfWeek.getDate() + 6);
-  const endFormattedMonth = endOfWeek.toLocaleDateString('en-US', { month: 'long' });
-  
-  // Create a header string
-  const headerString = formattedMonth === endFormattedMonth
-    ? `${formattedMonth} ${formattedYear}`
-    : `${formattedMonth} - ${endFormattedMonth} ${formattedYear}`;
+  const handleNextWeek = () => {
+    const newDate = addDays(startDate, 7);
+    onSelectDate(newDate);
+  };
   
   return (
-    <div className="w-full">
+    <div>
       <div className="flex justify-between items-center mb-4">
-        <Button variant="outline" size="icon" onClick={goToPreviousWeek}>
-          <ChevronLeft className="h-4 w-4" />
-        </Button>
-        <h3 className="text-lg font-medium">{headerString}</h3>
-        <Button variant="outline" size="icon" onClick={goToNextWeek}>
-          <ChevronRight className="h-4 w-4" />
-        </Button>
+        <h2 className="text-lg font-medium">{format(startDate, 'MMMM yyyy')}</h2>
+        <div className="flex gap-2">
+          <Button variant="outline" size="icon" onClick={handlePrevWeek}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button variant="outline" size="icon" onClick={handleNextWeek}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
       
       <div className="grid grid-cols-7 gap-2">
-        {daysOfWeek.map((date, i) => {
-          const dayString = date.toLocaleDateString('en-US', { weekday: 'short' });
-          const dayNum = date.getDate();
-          const isToday = date.toDateString() === today.toDateString();
-          const isSelected = date.toDateString() === selectedDate.toDateString();
-          const mealTypes = getMealIndicators(date);
-          
-          return (
-            <Button
-              key={i}
-              variant="ghost"
-              className={`h-auto flex flex-col items-center py-2 px-0 gap-1 rounded-lg ${
-                isSelected ? 'bg-primary/10 text-primary' : ''
-              } ${
-                isToday && !isSelected ? 'border border-primary/30' : ''
-              }`}
-              onClick={() => onSelectDate(date)}
-            >
-              <span className="text-xs font-medium">{dayString}</span>
-              <span className={`flex items-center justify-center w-8 h-8 rounded-full ${
-                isToday ? 'bg-primary text-primary-foreground' : ''
-              }`}>
-                {dayNum}
-              </span>
-              
-              {/* Meal type indicators */}
-              {mealTypes.length > 0 && (
-                <div className="flex space-x-1 mt-1">
-                  {mealTypes.map((type, index) => (
-                    <div 
-                      key={index}
-                      className={`w-2 h-2 rounded-full ${mealIndicatorColors[type]}`} 
-                      title={type.charAt(0).toUpperCase() + type.slice(1)}
-                    />
-                  ))}
-                </div>
-              )}
-            </Button>
-          );
-        })}
+        {weekDays.map((day) => (
+          <Day
+            key={day.date.toISOString()}
+            day={day.date}
+            isSelected={day.isSelected}
+            onClick={() => onSelectDate(day.date)}
+            meals={day.meals}
+          />
+        ))}
       </div>
     </div>
   );

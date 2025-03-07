@@ -7,13 +7,15 @@ import { Card, CardContent } from '@/components/ui/card';
 import AnimatedContainer from '@/components/ui/AnimatedContainer';
 import WeeklyCalendar from '@/components/meal-planner/WeeklyCalendar';
 import { MealPlan, Recipe } from '@/lib/types';
-import { sampleMealPlans, sampleRecipes } from '@/lib/data';
+import { sampleRecipes } from '@/lib/data';
 import MealPlanCard from '@/components/meal-planner/MealPlanCard';
 import { toast } from 'sonner';
 import AddMealDialog from '@/components/meal-planner/AddMealDialog';
+import { v4 as uuidv4 } from 'uuid';
 
 const MealPlanner = () => {
-  const [mealPlans, setMealPlans] = useState<MealPlan[]>(sampleMealPlans);
+  // Initialize with empty meal plans since sampleMealPlans is not available
+  const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isAddMealOpen, setIsAddMealOpen] = useState(false);
   

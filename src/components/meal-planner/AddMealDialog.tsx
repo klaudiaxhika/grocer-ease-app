@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MealPlan, MealType, Recipe } from '@/lib/types';
+import { MealPlan, MealType, Recipe, WeekDay } from '@/lib/types';
 import { v4 as uuidv4 } from 'uuid';
 
 interface AddMealDialogProps {
@@ -15,6 +15,12 @@ interface AddMealDialogProps {
   selectedDate: Date;
   availableRecipes: Recipe[];
 }
+
+// Helper function to convert date to weekday
+const getWeekDay = (date: Date): WeekDay => {
+  const days: WeekDay[] = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  return days[date.getDay()];
+};
 
 const AddMealDialog: React.FC<AddMealDialogProps> = ({ 
   open, 
@@ -36,6 +42,7 @@ const AddMealDialog: React.FC<AddMealDialogProps> = ({
     const newMeal: MealPlan = {
       id: uuidv4(),
       date: selectedDate.toISOString(),
+      day: getWeekDay(selectedDate),
       recipe: recipe,
       mealType: mealType,
       servings: servings
