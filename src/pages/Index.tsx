@@ -12,7 +12,7 @@ const Index = () => {
       <div className="flex flex-col py-8 md:py-12">
         <AnimatedContainer animation="fade-up" className="mb-8 md:mb-12 text-center">
           <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-4">
-            Your Smart Grocery Planner
+            Welcome to GrocerEase
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
             Plan your meals, generate optimized grocery lists, and simplify your shopping experience.
