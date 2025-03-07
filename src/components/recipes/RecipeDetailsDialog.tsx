@@ -34,7 +34,7 @@ const RecipeDetailsDialog: React.FC<RecipeDetailsDialogProps> = ({
             <div className="flex items-center space-x-4">
               <div className="flex items-center">
                 <Clock className="h-4 w-4 mr-1 text-muted-foreground" />
-                <span className="text-sm">{recipe.prepTime + recipe.cookTime} min</span>
+                <span className="text-sm">{recipe.prep_time + recipe.cook_time} min</span>
               </div>
               <div className="flex items-center">
                 <Users className="h-4 w-4 mr-1 text-muted-foreground" />

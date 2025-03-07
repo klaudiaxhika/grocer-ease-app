@@ -15,8 +15,8 @@ interface RecipeCardProps {
 }
 
 const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onAddToMealPlan, delay }) => {
-  const { name, description, prepTime, cookTime, servings, tags } = recipe;
-  const totalTime = prepTime + cookTime;
+  const { name, description, prep_time, cook_time, servings, tags } = recipe;
+  const totalTime = prep_time + cook_time;
   
   return (
     <AnimatedContainer
@@ -27,8 +27,8 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onAddToMealPlan
       <Card className="h-full flex flex-col hover:shadow-md transition-shadow">
         <CardHeader className="p-0">
           <div className="relative h-40 bg-gray-100 overflow-hidden">
-            {recipe.image ? (
-              <img src={recipe.image} alt={name} className="w-full h-full object-cover" />
+            {recipe.image_url ? (
+              <img src={recipe.image_url} alt={name} className="w-full h-full object-cover" />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/5 to-secondary/5">
                 <span className="text-muted-foreground">{name}</span>

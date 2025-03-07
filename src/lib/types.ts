@@ -5,10 +5,13 @@ export type WeekDay = 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday'
 
 export interface Ingredient {
   id: string;
+  recipe_id?: string;
   name: string;
   quantity: number;
   unit: string;
   category: IngredientCategory;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export type IngredientCategory = 
@@ -28,20 +31,23 @@ export type IngredientCategory =
 
 export interface Recipe {
   id: string;
+  user_id?: string;
   name: string;
   description: string;
   servings: number;
-  prepTime: number;
-  cookTime: number;
+  prep_time: number;
+  cook_time: number;
   ingredients: Ingredient[];
   instructions: string[];
   tags: string[];
-  image?: string;
+  image_url?: string;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface MealPlan {
   id: string;
-  date: string; // Added the date property
+  date: string;
   day: WeekDay;
   mealType: MealType;
   recipe: Recipe;

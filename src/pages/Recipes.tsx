@@ -1,21 +1,37 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Plus, Search } from 'lucide-react';
 import AppLayout from '@/components/layout/AppLayout';
 import AnimatedContainer from '@/components/ui/AnimatedContainer';
 import { Recipe } from '@/lib/types';
-import { sampleRecipes } from '@/lib/data';
 import { toast } from 'sonner';
 import RecipeCard from '@/components/recipes/RecipeCard';
 import RecipeDetailsDialog from '@/components/recipes/RecipeDetailsDialog';
 import RecipeSearchBar from '@/components/recipes/RecipeSearchBar';
+import { getRecipes } from '@/lib/supabase';
+import { useAuth } from '@/lib/auth-context';
+import { useQuery } from '@tanstack/react-query';
 
 const Recipes = () => {
-  const [recipes, setRecipes] = useState<Recipe[]>(sampleRecipes);
+  const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [isRecipeDialogOpen, setIsRecipeDialogOpen] = useState(false);
+  
+  // Fetch recipes using React Query
+  const { data: recipesData, isLoading, isError, refetch } = useQuery({
+    queryKey: ['recipes'],
+    queryFn: async () => {
+      const { data, error } = await getRecipes();
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!user, // Only fetch if user is logged in
+  });
+
+  // Use the fetched recipes or empty array if not available
+  const recipes = recipesData || [];
 
   const filteredRecipes = recipes.filter(recipe =>
     recipe.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -53,7 +69,21 @@ const Recipes = () => {
         />
 
         <AnimatedContainer animation="fade-up" delay="stagger-2">
-          {filteredRecipes.length > 0 ? (
+          {isLoading ? (
+            <div className="text-center py-12">
+              <p>Loading your recipes...</p>
+            </div>
+          ) : isError ? (
+            <div className="text-center py-12 bg-white rounded-lg border">
+              <h3 className="text-lg font-medium mb-2 text-destructive">Error loading recipes</h3>
+              <p className="text-muted-foreground mb-4">
+                There was a problem loading your recipes.
+              </p>
+              <Button variant="outline" onClick={() => refetch()}>
+                Try Again
+              </Button>
+            </div>
+          ) : filteredRecipes.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {filteredRecipes.map((recipe, index) => (
                 <RecipeCard
