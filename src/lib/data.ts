@@ -206,8 +206,8 @@ export const generateGroceryList = (mealPlan: MealPlan[]): GroceryList => {
       if (groceryItems[key]) {
         // Adjust quantity based on servings and add recipe to the list
         groceryItems[key].quantity += (ingredient.quantity * meal.servings) / meal.recipe.servings;
-        if (!groceryItems[key].recipes.includes(meal.recipe.name)) {
-          groceryItems[key].recipes.push(meal.recipe.name);
+        if (!groceryItems[key].recipe_sources.includes(meal.recipe.name)) {
+          groceryItems[key].recipe_sources.push(meal.recipe.name);
         }
       } else {
         // Create new grocery item
@@ -218,7 +218,9 @@ export const generateGroceryList = (mealPlan: MealPlan[]): GroceryList => {
           unit: ingredient.unit,
           category: ingredient.category,
           checked: false,
-          recipes: [meal.recipe.name]
+          recipe_sources: [meal.recipe.name],
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         };
       }
     });
@@ -227,11 +229,16 @@ export const generateGroceryList = (mealPlan: MealPlan[]): GroceryList => {
   // Convert to array and sort by category
   const itemsArray = Object.values(groceryItems);
   
+  const now = new Date().toISOString();
+  
   return {
     id: uuidv4(),
     name: 'Weekly Grocery List',
-    date: new Date().toISOString(),
-    items: itemsArray
+    start_date: now,
+    end_date: now,
+    items: itemsArray,
+    created_at: now,
+    updated_at: now
   };
 };
 

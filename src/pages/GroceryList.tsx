@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -138,14 +137,14 @@ const GroceryListPage = () => {
     navigate(`/grocery-list/${newList.id}`);
   };
   
-  const groupedItems = groceryList?.items.reduce((acc, item) => {
+  const groupedItems = groceryList?.items?.reduce((acc, item) => {
     const category = item.category as IngredientCategory;
     if (!acc[category]) {
       acc[category] = [];
     }
     acc[category].push(item);
     return acc;
-  }, {} as Record<IngredientCategory, GroceryItem[]>) || {};
+  }, {} as Record<IngredientCategory, GroceryItem[]>) || {} as Record<IngredientCategory, GroceryItem[]>;
   
   if ((isLoadingLists && !id) || (isLoadingList && id)) {
     return (
