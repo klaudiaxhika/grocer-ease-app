@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -5,11 +6,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, Save, X } from 'lucide-react';
+import { Plus, Trash2, Save, X, Link, Loader2 } from 'lucide-react';
 import { Recipe, Ingredient, IngredientCategory } from '@/lib/types';
 import { createRecipe } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
+import { supabase } from '@/integrations/supabase/client';
 
 interface AddEditRecipeDialogProps {
   open: boolean;
@@ -36,6 +38,8 @@ const AddEditRecipeDialog: React.FC<AddEditRecipeDialogProps> = ({
   onSuccess
 }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [recipeUrl, setRecipeUrl] = useState('');
+  const [isScrapingUrl, setIsScrapingUrl] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [servings, setServings] = useState(2);
@@ -48,6 +52,7 @@ const AddEditRecipeDialog: React.FC<AddEditRecipeDialogProps> = ({
   const [tagInput, setTagInput] = useState('');
 
   const resetForm = () => {
+    setRecipeUrl('');
     setName('');
     setDescription('');
     setServings(2);
@@ -100,6 +105,58 @@ const AddEditRecipeDialog: React.FC<AddEditRecipeDialogProps> = ({
 
   const handleRemoveTag = (tag: string) => {
     setTags(tags.filter(t => t !== tag));
+  };
+
+  const handleScrapeRecipe = async () => {
+    if (!recipeUrl || !recipeUrl.startsWith('http')) {
+      toast.error('Please enter a valid URL');
+      return;
+    }
+
+    setIsScrapingUrl(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('scrape-recipe', {
+        body: { url: recipeUrl }
+      });
+
+      if (error) throw new Error(error.message);
+      if (!data || !data.data) throw new Error('No recipe data found');
+
+      const recipeData = data.data;
+      
+      // Populate the form with the scraped data
+      if (recipeData.name) setName(recipeData.name);
+      if (recipeData.description) setDescription(recipeData.description);
+      if (recipeData.servings) setServings(recipeData.servings);
+      if (recipeData.prepTime) setPrepTime(recipeData.prepTime);
+      if (recipeData.cookTime) setCookTime(recipeData.cookTime);
+      if (recipeData.imageUrl) setImageUrl(recipeData.imageUrl);
+      
+      // Handle ingredients
+      if (recipeData.ingredients && recipeData.ingredients.length > 0) {
+        const formattedIngredients = recipeData.ingredients.map(ing => ({
+          id: uuidv4(),
+          name: ing.name,
+          quantity: ing.quantity || 1,
+          unit: ing.unit || '',
+          category: 'other' as IngredientCategory
+        }));
+        setIngredients(formattedIngredients);
+      }
+      
+      // Handle instructions
+      if (recipeData.instructions && recipeData.instructions.length > 0) {
+        setInstructions(recipeData.instructions);
+      }
+
+      toast.success('Recipe details imported successfully');
+    } catch (error) {
+      console.error('Error scraping recipe:', error);
+      toast.error(error.message || 'Failed to import recipe');
+    } finally {
+      setIsScrapingUrl(false);
+    }
   };
 
   const handleSubmit = async () => {
@@ -167,6 +224,41 @@ const AddEditRecipeDialog: React.FC<AddEditRecipeDialogProps> = ({
         </DialogHeader>
 
         <div className="grid gap-6 py-4">
+          {/* URL Import Section */}
+          <div className="space-y-2 border p-4 rounded-md">
+            <Label htmlFor="recipeUrl">Import from URL</Label>
+            <div className="flex space-x-2">
+              <Input
+                id="recipeUrl"
+                value={recipeUrl}
+                onChange={(e) => setRecipeUrl(e.target.value)}
+                placeholder="https://example.com/recipe"
+                className="flex-grow"
+              />
+              <Button 
+                onClick={handleScrapeRecipe} 
+                disabled={isScrapingUrl || !recipeUrl}
+                variant="secondary"
+                className="whitespace-nowrap"
+              >
+                {isScrapingUrl ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Importing...
+                  </>
+                ) : (
+                  <>
+                    <Link className="mr-2 h-4 w-4" />
+                    Import
+                  </>
+                )}
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Paste a URL to a recipe page to attempt to extract recipe details automatically
+            </p>
+          </div>
+          
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <Label htmlFor="name">Recipe Name*</Label>
