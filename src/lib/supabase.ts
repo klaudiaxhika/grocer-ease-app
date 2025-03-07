@@ -1,6 +1,5 @@
-
 import { createClient } from '@supabase/supabase-js';
-import { Ingredient, Recipe } from './types';
+import { Ingredient, Recipe, MealPlan } from './types';
 
 const supabaseUrl = 'https://yilqlufqhjwszclncjdk.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpbHFsdWZxaGp3c3pjbG5jamRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEzNTUwOTksImV4cCI6MjA1NjkzMTA5OX0.msrgbjLs0wm_TimAXba31fd8mnaN7sAiFw8dAGSMSms';
@@ -294,6 +293,178 @@ export async function deleteRecipe(id: string): Promise<{
     return { success: true, error: null };
   } catch (error) {
     console.error(`Error deleting recipe ${id}:`, error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error : new Error('Unknown error occurred') 
+    };
+  }
+}
+
+// Meal plan functions
+export async function getMealPlans(): Promise<{ 
+  data: MealPlan[] | null;
+  error: Error | null;
+}> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) throw new Error('Not authenticated');
+    
+    const { data: mealPlansData, error: mealPlansError } = await supabase
+      .from('meal_plans')
+      .select(`
+        id,
+        date,
+        day,
+        meal_type,
+        servings,
+        recipe_id
+      `)
+      .eq('user_id', user.id)
+      .order('date', { ascending: true });
+      
+    if (mealPlansError) throw mealPlansError;
+    
+    // We need to fetch the recipes for each meal plan
+    if (mealPlansData && mealPlansData.length > 0) {
+      // Get unique recipe IDs
+      const recipeIds = [...new Set(mealPlansData.map(mp => mp.recipe_id))];
+      
+      // Fetch all recipes at once
+      const { data: recipesData, error: recipesError } = await supabase
+        .from('recipes')
+        .select(`
+          *,
+          ingredients (*)
+        `)
+        .in('id', recipeIds);
+        
+      if (recipesError) throw recipesError;
+      
+      // Map recipes to meal plans
+      const mealPlans: MealPlan[] = mealPlansData.map(mp => {
+        const recipe = recipesData?.find(r => r.id === mp.recipe_id);
+        return {
+          id: mp.id,
+          date: mp.date,
+          day: mp.day as WeekDay,
+          mealType: mp.meal_type as MealType,
+          servings: mp.servings,
+          recipe: recipe as Recipe
+        };
+      });
+      
+      return { data: mealPlans, error: null };
+    }
+    
+    return { data: [], error: null };
+  } catch (error) {
+    console.error('Error fetching meal plans:', error);
+    return { 
+      data: null, 
+      error: error instanceof Error ? error : new Error('Unknown error occurred') 
+    };
+  }
+}
+
+export async function createMealPlan(mealPlan: Omit<MealPlan, 'id'>): Promise<{ 
+  data: MealPlan | null;
+  error: Error | null;
+}> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) throw new Error('Not authenticated');
+    
+    const { data, error } = await supabase
+      .from('meal_plans')
+      .insert({
+        user_id: user.id,
+        date: mealPlan.date,
+        day: mealPlan.day,
+        meal_type: mealPlan.mealType,
+        recipe_id: mealPlan.recipe.id,
+        servings: mealPlan.servings
+      })
+      .select()
+      .single();
+      
+    if (error) throw error;
+    
+    // Return the created meal plan
+    const newMealPlan: MealPlan = {
+      id: data.id,
+      date: data.date,
+      day: data.day as WeekDay,
+      mealType: data.meal_type as MealType,
+      servings: data.servings,
+      recipe: mealPlan.recipe
+    };
+    
+    return { data: newMealPlan, error: null };
+  } catch (error) {
+    console.error('Error creating meal plan:', error);
+    return { 
+      data: null, 
+      error: error instanceof Error ? error : new Error('Unknown error occurred') 
+    };
+  }
+}
+
+export async function updateMealPlan(mealPlan: MealPlan): Promise<{ 
+  success: boolean;
+  error: Error | null;
+}> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) throw new Error('Not authenticated');
+    
+    const { error } = await supabase
+      .from('meal_plans')
+      .update({
+        date: mealPlan.date,
+        day: mealPlan.day,
+        meal_type: mealPlan.mealType,
+        recipe_id: mealPlan.recipe.id,
+        servings: mealPlan.servings,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', mealPlan.id)
+      .eq('user_id', user.id);
+      
+    if (error) throw error;
+    
+    return { success: true, error: null };
+  } catch (error) {
+    console.error('Error updating meal plan:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error : new Error('Unknown error occurred') 
+    };
+  }
+}
+
+export async function deleteMealPlan(id: string): Promise<{ 
+  success: boolean;
+  error: Error | null;
+}> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) throw new Error('Not authenticated');
+    
+    const { error } = await supabase
+      .from('meal_plans')
+      .delete()
+      .eq('id', id)
+      .eq('user_id', user.id);
+      
+    if (error) throw error;
+    
+    return { success: true, error: null };
+  } catch (error) {
+    console.error('Error deleting meal plan:', error);
     return { 
       success: false, 
       error: error instanceof Error ? error : new Error('Unknown error occurred') 

@@ -6,12 +6,14 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MealPlan, MealType, Recipe, WeekDay } from '@/lib/types';
-import { v4 as uuidv4 } from 'uuid';
+import { useQuery } from '@tanstack/react-query';
+import { getRecipes } from '@/lib/supabase';
+import { Loader2 } from 'lucide-react';
 
 interface AddMealDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onAddMeal: (meal: MealPlan) => void;
+  onAddMeal: (meal: Omit<MealPlan, 'id'>) => void;
   selectedDate: Date;
   availableRecipes: Recipe[];
 }
@@ -26,21 +28,30 @@ const AddMealDialog: React.FC<AddMealDialogProps> = ({
   open, 
   onOpenChange, 
   onAddMeal, 
-  selectedDate,
-  availableRecipes 
+  selectedDate
 }) => {
   const [selectedRecipe, setSelectedRecipe] = useState<string>('');
   const [mealType, setMealType] = useState<MealType>('breakfast');
   const [servings, setServings] = useState<number>(2);
   
+  // Fetch recipes from database
+  const { data: recipesData, isLoading: isLoadingRecipes, isError: isRecipesError } = useQuery({
+    queryKey: ['recipes'],
+    queryFn: async () => {
+      const { data, error } = await getRecipes();
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: open // Only fetch when dialog is open
+  });
+  
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const recipe = availableRecipes.find(r => r.id === selectedRecipe);
+    const recipe = recipesData?.find(r => r.id === selectedRecipe);
     if (!recipe) return;
     
-    const newMeal: MealPlan = {
-      id: uuidv4(),
+    const newMeal: Omit<MealPlan, 'id'> = {
       date: selectedDate.toISOString(),
       day: getWeekDay(selectedDate),
       recipe: recipe,
@@ -73,22 +84,39 @@ const AddMealDialog: React.FC<AddMealDialogProps> = ({
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="space-y-2">
             <Label htmlFor="recipe">Recipe</Label>
-            <Select
-              value={selectedRecipe}
-              onValueChange={setSelectedRecipe}
-              required
-            >
-              <SelectTrigger id="recipe">
-                <SelectValue placeholder="Select a recipe" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableRecipes.map(recipe => (
-                  <SelectItem key={recipe.id} value={recipe.id}>
-                    {recipe.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {isLoadingRecipes ? (
+              <div className="flex items-center justify-center p-4">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                <span className="ml-2 text-sm text-muted-foreground">Loading recipes...</span>
+              </div>
+            ) : isRecipesError ? (
+              <div className="text-sm text-destructive p-2 border border-destructive/20 rounded-md">
+                Failed to load recipes. Please try again.
+              </div>
+            ) : (
+              <Select
+                value={selectedRecipe}
+                onValueChange={setSelectedRecipe}
+                required
+              >
+                <SelectTrigger id="recipe">
+                  <SelectValue placeholder="Select a recipe" />
+                </SelectTrigger>
+                <SelectContent>
+                  {recipesData && recipesData.length > 0 ? (
+                    recipesData.map(recipe => (
+                      <SelectItem key={recipe.id} value={recipe.id}>
+                        {recipe.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="text-center py-2 text-sm text-muted-foreground">
+                      No recipes found. Add some from the Recipes page.
+                    </div>
+                  )}
+                </SelectContent>
+              </Select>
+            )}
           </div>
           
           <div className="space-y-2">
@@ -127,7 +155,10 @@ const AddMealDialog: React.FC<AddMealDialogProps> = ({
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={!selectedRecipe}>
+            <Button 
+              type="submit" 
+              disabled={!selectedRecipe || isLoadingRecipes}
+            >
               Add to Plan
             </Button>
           </DialogFooter>

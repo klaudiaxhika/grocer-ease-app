@@ -6,46 +6,117 @@ import AppLayout from '@/components/layout/AppLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import AnimatedContainer from '@/components/ui/AnimatedContainer';
 import WeeklyCalendar from '@/components/meal-planner/WeeklyCalendar';
-import { MealPlan, Recipe } from '@/lib/types';
-import { sampleRecipes } from '@/lib/data';
+import { MealPlan } from '@/lib/types';
 import MealPlanCard from '@/components/meal-planner/MealPlanCard';
 import { toast } from 'sonner';
 import AddMealDialog from '@/components/meal-planner/AddMealDialog';
-import { v4 as uuidv4 } from 'uuid';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getMealPlans, createMealPlan, updateMealPlan, deleteMealPlan } from '@/lib/supabase';
+import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/lib/auth-context';
 
 const MealPlanner = () => {
-  // Initialize with empty meal plans since sampleMealPlans is not available
-  const [mealPlans, setMealPlans] = useState<MealPlan[]>([]);
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isAddMealOpen, setIsAddMealOpen] = useState(false);
   
+  // Fetch meal plans from Supabase
+  const { data: mealPlans, isLoading, isError } = useQuery({
+    queryKey: ['mealPlans'],
+    queryFn: getMealPlans,
+    select: (data) => data.data || [],
+    enabled: !!user, // Only fetch if user is logged in
+  });
+  
+  // Create meal plan mutation
+  const createMealPlanMutation = useMutation({
+    mutationFn: createMealPlan,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mealPlans'] });
+      toast.success('Meal added to your plan');
+    },
+    onError: (error) => {
+      console.error('Error creating meal plan:', error);
+      toast.error('Failed to add meal to plan');
+    }
+  });
+  
+  // Update meal plan mutation
+  const updateMealPlanMutation = useMutation({
+    mutationFn: updateMealPlan,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mealPlans'] });
+      toast.success('Meal updated');
+    },
+    onError: (error) => {
+      console.error('Error updating meal plan:', error);
+      toast.error('Failed to update meal');
+    }
+  });
+  
+  // Delete meal plan mutation
+  const deleteMealPlanMutation = useMutation({
+    mutationFn: deleteMealPlan,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mealPlans'] });
+      toast.success('Meal removed from your plan');
+    },
+    onError: (error) => {
+      console.error('Error deleting meal plan:', error);
+      toast.error('Failed to remove meal');
+    }
+  });
+  
   // Filter meals for the selected date
-  const mealsForSelectedDate = mealPlans.filter(meal => {
+  const mealsForSelectedDate = mealPlans?.filter(meal => {
     const mealDate = new Date(meal.date);
     return mealDate.toDateString() === selectedDate.toDateString();
-  });
+  }) || [];
 
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);
   };
 
-  const handleAddMeal = (meal: MealPlan) => {
-    setMealPlans([...mealPlans, meal]);
+  const handleAddMeal = (meal: Omit<MealPlan, 'id'>) => {
+    createMealPlanMutation.mutate(meal);
     setIsAddMealOpen(false);
-    toast.success('Meal added to your plan');
   };
 
   const handleDeleteMeal = (mealId: string) => {
-    setMealPlans(mealPlans.filter(meal => meal.id !== mealId));
-    toast.success('Meal removed from your plan');
+    deleteMealPlanMutation.mutate(mealId);
   };
 
   const handleEditMeal = (updatedMeal: MealPlan) => {
-    setMealPlans(mealPlans.map(meal => 
-      meal.id === updatedMeal.id ? updatedMeal : meal
-    ));
-    toast.success('Meal updated');
+    updateMealPlanMutation.mutate(updatedMeal);
   };
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <AppLayout>
+        <div className="flex items-center justify-center h-[60vh]">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <span className="ml-2 text-lg">Loading your meal plans...</span>
+        </div>
+      </AppLayout>
+    );
+  }
+
+  // Show error state
+  if (isError) {
+    return (
+      <AppLayout>
+        <div className="flex flex-col items-center justify-center h-[60vh]">
+          <h2 className="text-xl font-semibold text-destructive mb-2">Error Loading Meal Plans</h2>
+          <p className="text-muted-foreground mb-4">There was a problem loading your meal plans.</p>
+          <Button onClick={() => queryClient.invalidateQueries({ queryKey: ['mealPlans'] })}>
+            Try Again
+          </Button>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -62,7 +133,7 @@ const MealPlanner = () => {
             <WeeklyCalendar 
               selectedDate={selectedDate} 
               onSelectDate={handleDateSelect} 
-              mealPlans={mealPlans}
+              mealPlans={mealPlans || []}
             />
           </CardContent>
         </Card>
@@ -102,7 +173,7 @@ const MealPlanner = () => {
         onOpenChange={setIsAddMealOpen}
         onAddMeal={handleAddMeal}
         selectedDate={selectedDate}
-        availableRecipes={sampleRecipes}
+        availableRecipes={[]} // This prop is no longer used as we fetch recipes in the dialog
       />
     </AppLayout>
   );
