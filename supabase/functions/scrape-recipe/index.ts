@@ -129,6 +129,60 @@ serve(async (req) => {
       }
     }
 
+    // BBC Good Food specific handling - if we didn't get ingredients from schema or need more data
+    if (url.includes('bbcgoodfood.com') && (!recipeData.ingredients || recipeData.ingredients.length === 0)) {
+      console.log('Attempting BBC Good Food specific extraction')
+      
+      // Extract ingredients from BBC Good Food HTML structure
+      const ingredientSectionMatch = html.match(/<ul class="mntl-structured-ingredients__list">(.*?)<\/ul>/s)
+      if (ingredientSectionMatch) {
+        const ingredientSection = ingredientSectionMatch[1]
+        const ingredientItems = ingredientSection.match(/<li[^>]*>(.*?)<\/li>/sg) || []
+        
+        recipeData.ingredients = ingredientItems.map(item => {
+          // Extract ingredient text from list item
+          const ingredientText = item.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+          return parseIngredient(ingredientText)
+        })
+      }
+      
+      // Alternative ingredient extraction for BBC Good Food
+      if (!recipeData.ingredients || recipeData.ingredients.length === 0) {
+        const ingredientItems = html.match(/<li\s+class="[^"]*ingredient[^"]*"[^>]*>(.*?)<\/li>/sg) || []
+        
+        recipeData.ingredients = ingredientItems.map(item => {
+          const ingredientText = item.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+          const parsed = parseIngredient(ingredientText)
+          return {
+            name: parsed.name || ingredientText,
+            quantity: parsed.quantity,
+            unit: parsed.unit
+          }
+        })
+      }
+      
+      // Try to extract instructions if not already found
+      if (!recipeData.instructions || recipeData.instructions.length === 0) {
+        const methodSectionMatch = html.match(/<div[^>]*class="[^"]*method[^"]*"[^>]*>(.*?)<\/div>/s)
+        if (methodSectionMatch) {
+          const methodSection = methodSectionMatch[1]
+          const methodItems = methodSection.match(/<li[^>]*>(.*?)<\/li>/sg) || []
+          
+          recipeData.instructions = methodItems.map(item => {
+            return item.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+          }).filter(Boolean)
+        }
+      }
+      
+      // If we still don't have a name, try to extract it from title
+      if (!recipeData.name) {
+        const titleMatch = html.match(/<h1[^>]*>(.*?)<\/h1>/s)
+        if (titleMatch) {
+          recipeData.name = titleMatch[1].replace(/<[^>]*>/g, '').trim()
+        }
+      }
+    }
+
     // If we didn't find structured data, try some basic parsing
     if (!recipeData.name) {
       // Try to extract title
@@ -138,7 +192,8 @@ serve(async (req) => {
       }
     }
 
-    console.log('Extracted recipe data:', recipeData)
+    // Log the extracted data for debugging
+    console.log('Extracted recipe data:', JSON.stringify(recipeData, null, 2))
     
     return new Response(
       JSON.stringify({ data: recipeData }),
