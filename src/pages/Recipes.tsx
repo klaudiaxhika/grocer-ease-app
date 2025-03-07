@@ -149,7 +149,7 @@ const Recipes = () => {
                   <h3 className="text-sm font-medium mb-2">Tags</h3>
                   <div className="flex flex-wrap gap-2">
                     {selectedRecipe.tags.map((tag) => (
-                      <Badge key={tag} variant="outline" size="sm">
+                      <Badge key={tag} variant="outline">
                         {tag}
                       </Badge>
                     ))}
@@ -211,12 +211,12 @@ const RecipeCard: React.FC<RecipeCardProps> = ({ recipe, onView, onAddToMealPlan
           {tags.length > 0 && (
             <div className="flex flex-wrap gap-1 mb-4">
               {tags.slice(0, 3).map((tag) => (
-                <Badge key={tag} variant="outline" size="sm">
+                <Badge key={tag} variant="outline">
                   {tag}
                 </Badge>
               ))}
               {tags.length > 3 && (
-                <Badge variant="outline" size="sm">
+                <Badge variant="outline">
                   +{tags.length - 3}
                 </Badge>
               )}
