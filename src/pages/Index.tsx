@@ -2,82 +2,103 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import AppLayout from '@/components/layout/AppLayout';
-import { ShoppingCart, CalendarDays, BookOpen, CheckCircle, Utensils, Apple, CookingPot, Salad } from 'lucide-react';
+import { ShoppingCart, CalendarDays, BookOpen, CheckCircle, Utensils, Clock, MapPin, Search } from 'lucide-react';
 import AnimatedContainer from '@/components/ui/AnimatedContainer';
 
 const Index = () => {
   return (
     <AppLayout>
-      <div className="flex flex-col py-8 md:py-12">
-        <AnimatedContainer animation="fade-up" className="mb-8 md:mb-12 text-center">
-          <h1 className="text-3xl md:text-5xl font-bold tracking-tight mb-4 text-foreground">
-            Welcome to GrocerEase
+      <div className="flex flex-col pt-8 md:pt-12 pb-16">
+        <AnimatedContainer animation="fade-up" className="mb-8 md:mb-24 text-left max-w-4xl">
+          <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 text-foreground">
+            Plan your meals with <span className="text-primary">GrocerEase</span>
           </h1>
-          <p className="text-lg md:text-xl text-muted-foreground max-w-3xl mx-auto">
-            Plan your meals, generate optimized grocery lists, and simplify your shopping experience.
+          <p className="text-lg md:text-xl text-foreground/80 max-w-2xl mb-8">
+            Create grocery lists, plan your meals, and simplify your shopping experience.
           </p>
+          
+          <div className="bg-white/95 rounded-lg p-4 shadow-lg border border-gray-200 backdrop-blur-sm">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              <div className="relative col-span-1 md:col-span-2">
+                <MapPin className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                <Input 
+                  type="text" 
+                  placeholder="Enter your location" 
+                  className="pl-10 pr-4 py-6 bg-white border border-gray-200 rounded-md w-full"
+                />
+              </div>
+              <div className="col-span-1">
+                <Button className="w-full py-6 font-semibold" asChild>
+                  <Link to="/meal-planner">
+                    <Search className="mr-2 h-5 w-5" />
+                    Get Started
+                  </Link>
+                </Button>
+              </div>
+            </div>
+          </div>
         </AnimatedContainer>
 
         <AnimatedContainer 
           animation="fade-up" 
           delay="stagger-1"
-          className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12"
+          className="bg-white/90 backdrop-blur-md rounded-lg p-6 border border-gray-200 shadow-lg mb-8"
         >
-          <FeatureCard 
-            icon={<CalendarDays className="h-8 w-8 text-primary" />}
-            title="Plan Your Meals"
-            description="Create a weekly meal schedule with detailed recipes and portion control."
-            link="/meal-planner"
-          />
-          
-          <FeatureCard 
-            icon={<ShoppingCart className="h-8 w-8 text-primary" />}
-            title="Generate Grocery Lists"
-            description="Automatically create optimized shopping lists based on your meal plan."
-            link="/grocery-list"
-          />
-          
-          <FeatureCard 
-            icon={<BookOpen className="h-8 w-8 text-primary" />}
-            title="Manage Recipes"
-            description="Browse, save, and customize recipes from our collection or add your own."
-            link="/recipes"
-          />
+          <h2 className="text-2xl font-bold mb-6 text-foreground">Our Services</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <FeatureCard 
+              icon={<CalendarDays className="h-8 w-8 text-primary" />}
+              title="Meal Planning"
+              description="Create weekly meal schedules with detailed recipes and portion control."
+              link="/meal-planner"
+            />
+            
+            <FeatureCard 
+              icon={<ShoppingCart className="h-8 w-8 text-primary" />}
+              title="Smart Grocery Lists"
+              description="Generate optimized shopping lists based on your meal plans."
+              link="/grocery-list"
+            />
+            
+            <FeatureCard 
+              icon={<BookOpen className="h-8 w-8 text-primary" />}
+              title="Recipe Collection"
+              description="Browse, save, and customize recipes from our collection or add your own."
+              link="/recipes"
+            />
+          </div>
         </AnimatedContainer>
 
         <AnimatedContainer animation="fade-up" delay="stagger-2" className="mb-12">
-          <div className="bg-white rounded-lg overflow-hidden border border-amber-100 shadow-sm">
+          <div className="bg-white/90 backdrop-blur-md rounded-lg overflow-hidden border border-gray-200 shadow-lg">
             <div className="p-6">
-              <h2 className="text-2xl font-bold mb-4 text-foreground">How It Works</h2>
+              <h2 className="text-2xl font-bold mb-6 text-foreground">How It Works</h2>
               
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <StepCard 
-                  icon={<CookingPot className="h-5 w-5 text-primary" />}
                   number={1}
-                  title="Plan Your Meals"
-                  description="Select recipes for each day of the week and specify servings."
+                  title="Choose Recipes"
+                  description="Select recipes for each day of the week."
                 />
                 
                 <StepCard 
-                  icon={<Apple className="h-5 w-5 text-primary" />}
                   number={2}
-                  title="Review Ingredients"
-                  description="The app calculates all required ingredients with exact quantities."
+                  title="Set Portions"
+                  description="Specify servings for accurate ingredient calculations."
                 />
                 
                 <StepCard 
-                  icon={<ShoppingCart className="h-5 w-5 text-primary" />}
                   number={3}
-                  title="Optimize Your List"
-                  description="Adjust quantities and remove items you already have at home."
+                  title="Generate List"
+                  description="Create a smart shopping list with exact quantities."
                 />
                 
                 <StepCard 
-                  icon={<Salad className="h-5 w-5 text-primary" />}
                   number={4}
                   title="Shop Efficiently"
-                  description="Use your categorized list for an organized shopping experience."
+                  description="Enjoy organized, stress-free grocery shopping."
                 />
               </div>
             </div>
@@ -85,7 +106,7 @@ const Index = () => {
         </AnimatedContainer>
 
         <AnimatedContainer animation="fade-up" delay="stagger-3" className="text-center">
-          <Button asChild size="lg" className="rounded-full px-8">
+          <Button asChild size="lg" className="rounded-md px-8 py-6 text-lg font-semibold shadow-lg">
             <Link to="/meal-planner">
               Start Planning Your Meals
             </Link>
@@ -105,12 +126,12 @@ interface FeatureCardProps {
 
 const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description, link }) => {
   return (
-    <div className="bg-white rounded-lg overflow-hidden border border-amber-100 h-full transition-all hover:shadow-md">
+    <div className="bg-white rounded-lg overflow-hidden border border-gray-200 h-full transition-all hover:shadow-md">
       <div className="p-6 flex flex-col h-full">
         <div className="mb-4">{icon}</div>
         <h3 className="text-xl font-semibold mb-2 text-foreground">{title}</h3>
         <p className="text-muted-foreground mb-6 flex-grow">{description}</p>
-        <Button asChild variant="outline" className="mt-auto border-amber-200 hover:bg-amber-50">
+        <Button asChild variant="outline" className="mt-auto border-gray-200 hover:bg-gray-50 hover:text-primary">
           <Link to={link}>Get Started</Link>
         </Button>
       </div>
@@ -119,17 +140,16 @@ const FeatureCard: React.FC<FeatureCardProps> = ({ icon, title, description, lin
 };
 
 interface StepCardProps {
-  icon?: React.ReactNode;
   number: number;
   title: string;
   description: string;
 }
 
-const StepCard: React.FC<StepCardProps> = ({ icon, number, title, description }) => {
+const StepCard: React.FC<StepCardProps> = ({ number, title, description }) => {
   return (
-    <div className="flex flex-col items-center text-center p-4">
-      <div className="rounded-full bg-primary/10 w-12 h-12 flex items-center justify-center mb-4">
-        {icon ? icon : <span className="text-primary font-semibold">{number}</span>}
+    <div className="flex flex-col p-4 bg-white/50 rounded-lg border border-gray-100">
+      <div className="rounded-full bg-primary/10 w-10 h-10 flex items-center justify-center mb-4">
+        <span className="text-primary font-semibold">{number}</span>
       </div>
       <h3 className="font-medium mb-2 text-foreground">{title}</h3>
       <p className="text-sm text-muted-foreground">{description}</p>

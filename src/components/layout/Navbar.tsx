@@ -22,12 +22,12 @@ const Navbar: React.FC = () => {
   ];
 
   return (
-    <nav className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-amber-100">
+    <nav className="bg-white/90 backdrop-blur-md sticky top-0 z-50 border-b border-amber-100 shadow-sm">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link to="/" className="flex items-center">
-              <span className="text-xl font-semibold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              <span className="text-xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
                 GrocerEase
               </span>
             </Link>
@@ -42,7 +42,7 @@ const Navbar: React.FC = () => {
                 className={`inline-flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   location.pathname === item.path
                     ? 'text-primary bg-amber-50'
-                    : 'text-gray-600 hover:text-primary hover:bg-amber-50'
+                    : 'text-gray-700 hover:text-primary hover:bg-amber-50'
                 }`}
               >
                 <span className="mr-1.5">{item.icon}</span>
@@ -90,7 +90,7 @@ const Navbar: React.FC = () => {
                   className={`flex items-center px-3 py-3 rounded-md text-sm font-medium ${
                     location.pathname === item.path
                       ? 'text-primary bg-amber-50'
-                      : 'text-gray-600 hover:text-primary hover:bg-amber-50'
+                      : 'text-gray-700 hover:text-primary hover:bg-amber-50'
                   }`}
                   onClick={() => setIsMenuOpen(false)}
                 >
