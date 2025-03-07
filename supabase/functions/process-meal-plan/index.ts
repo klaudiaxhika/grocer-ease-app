@@ -14,7 +14,7 @@ serve(async (req) => {
     if (!openAiKey) {
       return new Response(
         JSON.stringify({ error: 'OpenAI API key not configured' }),
-        { headers: { ...corsHeaders, '⁣Content-Type': 'application/json' }, status: 500 }
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
       );
     }
 
