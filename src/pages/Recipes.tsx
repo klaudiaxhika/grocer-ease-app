@@ -6,7 +6,7 @@ import { Search, Plus, Clock, Users, Tag } from 'lucide-react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import AppLayout from '@/components/layout/AppLayout';
 import AnimatedContainer from '@/components/ui/AnimatedContainer';
-import Badge from '@/components/ui/Badge';
+import { Badge } from '@/components/ui/badge';
 import { Recipe } from '@/lib/types';
 import { sampleRecipes } from '@/lib/data';
 import { toast } from 'sonner';
