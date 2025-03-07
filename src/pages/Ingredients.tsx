@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PlusCircle, Trash2, Edit, Check, X, Loader2 } from 'lucide-react';
@@ -269,8 +268,27 @@ const Ingredients = () => {
                 <CardTitle>Ingredient List</CardTitle>
               </CardHeader>
               <CardContent>
+                <div className="mb-4">
+                  <Select
+                    value={selectedCategory}
+                    onValueChange={(value) => setSelectedCategory(value as IngredientCategory | 'all')}
+                  >
+                    <SelectTrigger className="sm:hidden">
+                      <SelectValue placeholder="Filter by category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Categories</SelectItem>
+                      {ingredientCategories.map((category) => (
+                        <SelectItem key={category} value={category}>
+                          {category.charAt(0).toUpperCase() + category.slice(1)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <Tabs defaultValue="all" className="space-y-4">
-                  <TabsList className="mb-2">
+                  <TabsList className="hidden sm:flex sm:flex-wrap mb-2">
                     <TabsTrigger value="all" onClick={() => setSelectedCategory('all')}>All</TabsTrigger>
                     {ingredientCategories.map((category) => (
                       <TabsTrigger 
@@ -289,77 +307,81 @@ const Ingredients = () => {
                         <Loader2 className="h-8 w-8 animate-spin text-primary" />
                       </div>
                     ) : filteredIngredients.length > 0 ? (
-                      <div className="space-y-2">
+                      <div className="grid gap-2 sm:grid-cols-1 md:grid-cols-2">
                         {filteredIngredients.map((ingredient) => (
                           <div 
                             key={ingredient.id} 
                             className="flex items-center justify-between p-3 bg-card rounded-md border"
                           >
                             {editingIngredient?.id === ingredient.id ? (
-                              <div className="flex items-center gap-2 w-full">
+                              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full">
                                 <Input
                                   className="flex-grow"
                                   value={editingIngredient.name}
                                   onChange={(e) => setEditingIngredient({ ...editingIngredient, name: e.target.value })}
                                 />
-                                <Input
-                                  className="w-20"
-                                  type="number"
-                                  min="0"
-                                  step="0.01"
-                                  value={editingIngredient.quantity}
-                                  onChange={(e) => setEditingIngredient({ ...editingIngredient, quantity: parseFloat(e.target.value) || 0 })}
-                                />
-                                <Input
-                                  className="w-20"
-                                  value={editingIngredient.unit}
-                                  onChange={(e) => setEditingIngredient({ ...editingIngredient, unit: e.target.value })}
-                                />
-                                <Select
-                                  value={editingIngredient.category}
-                                  onValueChange={(value) => setEditingIngredient({ ...editingIngredient, category: value as IngredientCategory })}
-                                >
-                                  <SelectTrigger className="w-32">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {ingredientCategories.map((category) => (
-                                      <SelectItem key={category} value={category}>
-                                        {category.charAt(0).toUpperCase() + category.slice(1)}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <Button 
-                                  size="icon" 
-                                  variant="ghost" 
-                                  onClick={handleUpdateIngredient}
-                                  disabled={updateIngredientMutation.isPending}
-                                >
-                                  <Check className="h-4 w-4" />
-                                </Button>
-                                <Button 
-                                  size="icon" 
-                                  variant="ghost" 
-                                  onClick={cancelEdit}
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
+                                <div className="flex flex-row gap-2">
+                                  <Input
+                                    className="w-20"
+                                    type="number"
+                                    min="0"
+                                    step="0.01"
+                                    value={editingIngredient.quantity}
+                                    onChange={(e) => setEditingIngredient({ ...editingIngredient, quantity: parseFloat(e.target.value) || 0 })}
+                                  />
+                                  <Input
+                                    className="w-20"
+                                    value={editingIngredient.unit}
+                                    onChange={(e) => setEditingIngredient({ ...editingIngredient, unit: e.target.value })}
+                                  />
+                                  <Select
+                                    value={editingIngredient.category}
+                                    onValueChange={(value) => setEditingIngredient({ ...editingIngredient, category: value as IngredientCategory })}
+                                  >
+                                    <SelectTrigger className="w-32">
+                                      <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {ingredientCategories.map((category) => (
+                                        <SelectItem key={category} value={category}>
+                                          {category.charAt(0).toUpperCase() + category.slice(1)}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div className="flex gap-1">
+                                  <Button 
+                                    size="icon" 
+                                    variant="ghost" 
+                                    onClick={handleUpdateIngredient}
+                                    disabled={updateIngredientMutation.isPending}
+                                  >
+                                    <Check className="h-4 w-4" />
+                                  </Button>
+                                  <Button 
+                                    size="icon" 
+                                    variant="ghost" 
+                                    onClick={cancelEdit}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
                               </div>
                             ) : (
                               <>
-                                <div className="flex items-center gap-2">
-                                  <span className="font-medium">{ingredient.name}</span>
+                                <div className="flex items-center gap-2 overflow-hidden">
+                                  <span className="font-medium truncate">{ingredient.name}</span>
                                   {ingredient.quantity > 0 && (
-                                    <span className="text-muted-foreground text-sm">
+                                    <span className="text-muted-foreground text-sm whitespace-nowrap">
                                       {ingredient.quantity} {ingredient.unit}
                                     </span>
                                   )}
-                                  <span className="text-xs px-2 py-0.5 bg-muted rounded-full">
+                                  <span className="text-xs px-2 py-0.5 bg-muted rounded-full whitespace-nowrap">
                                     {ingredient.category}
                                   </span>
                                 </div>
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 ml-2 shrink-0">
                                   <Button 
                                     size="icon" 
                                     variant="ghost" 
@@ -389,11 +411,9 @@ const Ingredients = () => {
                     )}
                   </TabsContent>
 
-                  {/* We only need one TabsContent since we're filtering with state */}
+                  {/* Content for individual category tabs will be controlled by filteredIngredients */}
                   {ingredientCategories.map((category) => (
-                    <TabsContent key={category} value={category}>
-                      {/* Content is controlled by the filteredIngredients variable */}
-                    </TabsContent>
+                    <TabsContent key={category} value={category}/>
                   ))}
                 </Tabs>
               </CardContent>
