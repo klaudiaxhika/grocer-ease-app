@@ -1,4 +1,3 @@
-
 import { Ingredient, Recipe, MealPlan, GroceryList, IngredientCategory, GroceryItem } from './types';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -121,10 +120,33 @@ export const sampleRecipes: Recipe[] = [
   }
 ];
 
+// Helper function to get ISO string date for a given weekday of the current week
+const getDateForWeekday = (weekday: string): string => {
+  const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const now = new Date();
+  const currentDay = now.getDay(); // 0-6, where 0 is Sunday
+  const targetDayIndex = days.indexOf(weekday.toLowerCase());
+  
+  // Calculate the difference in days
+  let diff = targetDayIndex - currentDay;
+  
+  // If the target day has already passed this week, get next week's date
+  if (diff < 0) {
+    diff += 7;
+  }
+  
+  // Set the date to the target weekday
+  const targetDate = new Date(now);
+  targetDate.setDate(now.getDate() + diff);
+  
+  return targetDate.toISOString().split('T')[0]; // Format as YYYY-MM-DD
+};
+
 // Sample meal plan
 export const sampleMealPlan: MealPlan[] = [
   {
     id: uuidv4(),
+    date: getDateForWeekday('monday'),
     day: 'monday',
     mealType: 'breakfast',
     recipe: sampleRecipes[0], // Classic Omelette
@@ -132,6 +154,7 @@ export const sampleMealPlan: MealPlan[] = [
   },
   {
     id: uuidv4(),
+    date: getDateForWeekday('monday'),
     day: 'monday',
     mealType: 'lunch',
     recipe: sampleRecipes[1], // Chicken Caesar Salad
@@ -139,6 +162,7 @@ export const sampleMealPlan: MealPlan[] = [
   },
   {
     id: uuidv4(),
+    date: getDateForWeekday('monday'),
     day: 'monday',
     mealType: 'dinner',
     recipe: sampleRecipes[2], // Spaghetti Bolognese
@@ -146,6 +170,7 @@ export const sampleMealPlan: MealPlan[] = [
   },
   {
     id: uuidv4(),
+    date: getDateForWeekday('tuesday'),
     day: 'tuesday',
     mealType: 'breakfast',
     recipe: sampleRecipes[0], // Classic Omelette
@@ -153,6 +178,7 @@ export const sampleMealPlan: MealPlan[] = [
   },
   {
     id: uuidv4(),
+    date: getDateForWeekday('tuesday'),
     day: 'tuesday',
     mealType: 'snack',
     recipe: sampleRecipes[3], // Greek Yogurt with Berries
@@ -160,6 +186,7 @@ export const sampleMealPlan: MealPlan[] = [
   },
   {
     id: uuidv4(),
+    date: getDateForWeekday('wednesday'),
     day: 'wednesday',
     mealType: 'lunch',
     recipe: sampleRecipes[1], // Chicken Caesar Salad
