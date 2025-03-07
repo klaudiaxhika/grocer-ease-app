@@ -8,6 +8,7 @@ import { Loader2, Upload, FileText, Check, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Recipe, MealPlan, MealType, WeekDay } from '@/lib/types';
+import { Card, CardContent } from '@/components/ui/card';
 
 interface UploadMealPlanDialogProps {
   open: boolean;
@@ -239,23 +240,33 @@ const UploadMealPlanDialog: React.FC<UploadMealPlanDialogProps> = ({
 
         {processingStatus === 'error' && (
           <div className="mt-4">
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                There was an error processing your meal plan. Please try again with more detailed text.
-              </AlertDescription>
-            </Alert>
+            <Card className="border-destructive bg-destructive/10">
+              <CardContent className="p-4 flex items-start space-x-2">
+                <AlertCircle className="h-5 w-5 text-destructive mt-0.5" />
+                <div>
+                  <p className="font-medium text-destructive">Error Processing</p>
+                  <p className="text-sm text-destructive/90">
+                    There was an error processing your meal plan. Please try again with more detailed text.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )}
 
         {processingStatus === 'success' && extractedData && (
           <div className="mt-4 space-y-4">
-            <Alert>
-              <Check className="h-4 w-4" />
-              <AlertDescription>
-                Successfully extracted {extractedData.recipes.length} recipes and {extractedData.mealPlans.length} meal plan entries.
-              </AlertDescription>
-            </Alert>
+            <Card className="border-green-600 bg-green-50 dark:bg-green-950/20">
+              <CardContent className="p-4 flex items-start space-x-2">
+                <Check className="h-5 w-5 text-green-600 mt-0.5" />
+                <div>
+                  <p className="font-medium text-green-600">Success</p>
+                  <p className="text-sm text-green-600/90">
+                    Successfully extracted {extractedData.recipes.length} recipes and {extractedData.mealPlans.length} meal plan entries.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
             
             <div className="bg-muted p-4 rounded-md">
               <h3 className="font-medium mb-2">Extracted Recipes:</h3>
