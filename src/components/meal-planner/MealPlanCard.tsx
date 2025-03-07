@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Edit, Trash2, Clock, Users } from 'lucide-react';
-import { Badge } from '@/components/ui/badge'; // Lowercase import to match the actual file
+import { Badge } from '../ui/badge';
 import { MealPlan, MealType } from '@/lib/types';
 import AnimatedContainer from '@/components/ui/AnimatedContainer';
 
