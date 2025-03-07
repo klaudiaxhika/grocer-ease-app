@@ -11,6 +11,7 @@ import MealPlanner from "./pages/MealPlanner";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import GroceryList from "./pages/GroceryList";
+import Ingredients from "./pages/Ingredients";
 import { AuthProvider } from "./lib/auth-context";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
@@ -27,6 +28,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/recipes" element={<Recipes />} />
+            <Route path="/ingredients" element={<Ingredients />} />
             <Route 
               path="/profile" 
               element={

@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, Utensils, CalendarDays, ShoppingCart, BookOpen } from 'lucide-react';
+import { Menu, X, Utensils, CalendarDays, ShoppingCart, BookOpen, Clipboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AnimatedContainer from '@/components/ui/AnimatedContainer';
 import UserMenu from './UserMenu';
@@ -19,6 +19,7 @@ const Navbar: React.FC = () => {
     { path: '/meal-planner', label: 'Meal Planner', icon: <CalendarDays size={18} /> },
     { path: '/grocery-list', label: 'Grocery List', icon: <ShoppingCart size={18} /> },
     { path: '/recipes', label: 'Recipes', icon: <BookOpen size={18} /> },
+    { path: '/ingredients', label: 'Ingredients', icon: <Clipboard size={18} /> },
   ];
 
   return (
