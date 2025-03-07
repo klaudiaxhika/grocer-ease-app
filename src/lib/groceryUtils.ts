@@ -45,7 +45,9 @@ export const generateGroceryList = (mealPlan: MealPlan[]): GroceryList => {
           unit: ingredient.unit,
           category: ingredient.category,
           checked: false,
-          recipes: [meal.recipe.name]
+          recipes: [meal.recipe.name],
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         };
       }
     });
@@ -54,11 +56,16 @@ export const generateGroceryList = (mealPlan: MealPlan[]): GroceryList => {
   // Convert to array
   const itemsArray = Object.values(groceryItems);
   
+  const now = new Date().toISOString();
+  
   return {
     id: uuidv4(),
     name: 'Weekly Grocery List',
-    date: new Date().toISOString(),
-    items: itemsArray
+    start_date: now,
+    end_date: now, // This should be updated with proper date logic
+    items: itemsArray,
+    created_at: now,
+    updated_at: now
   };
 };
 
@@ -122,7 +129,7 @@ export const exportGroceryList = (list: GroceryList, format: 'text' | 'csv' = 't
   const groupedItems = groupItemsByCategory(list.items);
   
   if (format === 'text') {
-    let output = `${list.name}\n${new Date(list.date).toLocaleDateString()}\n\n`;
+    let output = `${list.name}\n${new Date(list.start_date).toLocaleDateString()}\n\n`;
     
     Object.entries(groupedItems).forEach(([category, items]) => {
       output += `${category.toUpperCase()}\n`;

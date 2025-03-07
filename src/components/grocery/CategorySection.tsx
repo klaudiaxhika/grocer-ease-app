@@ -7,21 +7,19 @@ import { GroceryItem as GroceryItemType, IngredientCategory } from '@/lib/types'
 import AnimatedContainer from '@/components/ui/AnimatedContainer';
 
 interface CategorySectionProps {
-  category: IngredientCategory;
-  categoryName: string;
+  category: string;
   items: GroceryItemType[];
-  onToggleChecked: (id: string, checked: boolean) => void;
-  onRemoveItem: (id: string) => void;
-  onUpdateQuantity: (id: string, quantity: number) => void;
+  onToggleItem: (item: GroceryItemType) => void;
+  onRemoveItem?: (id: string) => void;
+  onUpdateQuantity?: (id: string, quantity: number) => void;
 }
 
 const CategorySection: React.FC<CategorySectionProps> = ({
   category,
-  categoryName,
   items,
-  onToggleChecked,
-  onRemoveItem,
-  onUpdateQuantity
+  onToggleItem,
+  onRemoveItem = () => {},
+  onUpdateQuantity = () => {}
 }) => {
   const [isOpen, setIsOpen] = React.useState(true);
   
@@ -35,6 +33,9 @@ const CategorySection: React.FC<CategorySectionProps> = ({
   const progressPercentage = items.length > 0 
     ? Math.round((checkedCount / items.length) * 100) 
     : 0;
+    
+  // Format category name
+  const categoryName = category.charAt(0).toUpperCase() + category.slice(1);
   
   return (
     <AnimatedContainer animation="fade-up" className="mb-4">
@@ -61,7 +62,10 @@ const CategorySection: React.FC<CategorySectionProps> = ({
             <GroceryItem
               key={item.id}
               item={item}
-              onToggleChecked={onToggleChecked}
+              onToggleChecked={(id, checked) => {
+                const updatedItem = {...item, checked};
+                onToggleItem(updatedItem);
+              }}
               onRemoveItem={onRemoveItem}
               onUpdateQuantity={onUpdateQuantity}
             />

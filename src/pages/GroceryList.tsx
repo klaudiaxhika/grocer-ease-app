@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -8,7 +7,7 @@ import {
   updateGroceryListItem, 
   deleteGroceryList 
 } from '@/lib/supabase';
-import { GroceryList, GroceryItem } from '@/lib/types';
+import { GroceryList, GroceryItem, IngredientCategory } from '@/lib/types';
 import AppLayout from '@/components/layout/AppLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -48,23 +47,20 @@ const GroceryListPage = () => {
   const queryClient = useQueryClient();
   const [isGenerateOpen, setIsGenerateOpen] = useState(false);
   
-  // Fetch grocery lists
   const { data: groceryLists, isLoading: isLoadingLists } = useQuery({
     queryKey: ['groceryLists'],
     queryFn: getGroceryLists,
     select: (data) => data.data || [],
-    enabled: !id && !!user, // Only fetch if no ID and user is logged in
+    enabled: !id && !!user,
   });
   
-  // Fetch single grocery list if ID is provided
   const { data: groceryList, isLoading: isLoadingList, isError } = useQuery({
     queryKey: ['groceryList', id],
     queryFn: () => getGroceryList(id!),
     select: (data) => data.data,
-    enabled: !!id && !!user, // Only fetch if ID is provided and user is logged in
+    enabled: !!id && !!user,
   });
   
-  // Update grocery item mutation
   const updateItemMutation = useMutation({
     mutationFn: (item: GroceryItem) => updateGroceryListItem(id!, item),
     onSuccess: () => {
@@ -76,7 +72,6 @@ const GroceryListPage = () => {
     }
   });
   
-  // Delete grocery list mutation
   const deleteListMutation = useMutation({
     mutationFn: deleteGroceryList,
     onSuccess: () => {
@@ -108,16 +103,15 @@ const GroceryListPage = () => {
     navigate(`/grocery-list/${newList.id}`);
   };
   
-  // Group items by category
   const groupedItems = groceryList?.items.reduce((acc, item) => {
-    if (!acc[item.category]) {
-      acc[item.category] = [];
+    const category = item.category as IngredientCategory;
+    if (!acc[category]) {
+      acc[category] = [];
     }
-    acc[item.category].push(item);
+    acc[category].push(item);
     return acc;
-  }, {} as Record<string, GroceryItem[]>) || {};
+  }, {} as Record<IngredientCategory, GroceryItem[]>) || {};
   
-  // Loading state
   if ((isLoadingLists && !id) || (isLoadingList && id)) {
     return (
       <AppLayout>
@@ -129,7 +123,6 @@ const GroceryListPage = () => {
     );
   }
   
-  // Error state for single list
   if (isError && id) {
     return (
       <AppLayout>
@@ -144,7 +137,6 @@ const GroceryListPage = () => {
     );
   }
   
-  // Single grocery list view
   if (id && groceryList) {
     const startDate = parseISO(groceryList.start_date);
     const endDate = parseISO(groceryList.end_date);
@@ -221,6 +213,8 @@ const GroceryListPage = () => {
                       category={category}
                       items={items}
                       onToggleItem={handleToggleItem}
+                      onRemoveItem={id => onRemoveItem(id)}
+                      onUpdateQuantity={(id, quantity) => handleUpdateQuantity(id, quantity)}
                     />
                   ))}
                 </div>
@@ -232,7 +226,6 @@ const GroceryListPage = () => {
     );
   }
   
-  // List of all grocery lists
   return (
     <AppLayout>
       <AnimatedContainer animation="fade-up" className="mb-6">

@@ -61,7 +61,9 @@ export interface GroceryItem {
   unit: string;
   category: IngredientCategory;
   checked: boolean;
-  recipe_sources: string[]; // List of recipe names this ingredient is used in
+  recipes: string[]; // Changed from recipe_sources to recipes to match actual usage
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface GroceryList {
