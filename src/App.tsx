@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import Recipes from "./pages/Recipes";
 import MealPlanner from "./pages/MealPlanner";
 import Login from "./pages/Login";
+import Profile from "./pages/Profile";
 import { AuthProvider } from "./lib/auth-context";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
@@ -25,6 +26,14 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/recipes" element={<Recipes />} />
+            <Route 
+              path="/profile" 
+              element={
+                <ProtectedRoute>
+                  <Profile />
+                </ProtectedRoute>
+              } 
+            />
             <Route 
               path="/meal-planner" 
               element={

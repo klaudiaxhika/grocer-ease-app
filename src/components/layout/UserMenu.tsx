@@ -14,7 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { LogOut, Settings, User } from 'lucide-react';
 
 const UserMenu = () => {
-  const { user, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
 
   if (!user) {
     return (
@@ -25,9 +25,13 @@ const UserMenu = () => {
   }
 
   // Get user initials for avatar fallback
-  const initials = user.email
-    ? user.email.substring(0, 2).toUpperCase()
-    : 'U';
+  const initials = profile?.full_name 
+    ? `${profile.full_name.split(' ')[0][0]}${profile.full_name.split(' ')[1]?.[0] || ''}`
+    : user.email
+      ? user.email.substring(0, 2).toUpperCase()
+      : 'U';
+
+  const displayName = profile?.full_name || user.email || 'User';
 
   return (
     <DropdownMenu>
@@ -35,8 +39,8 @@ const UserMenu = () => {
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-8 w-8">
             <AvatarImage
-              src={user.user_metadata?.avatar_url}
-              alt={user.email || 'User'}
+              src={profile?.avatar_url || user.user_metadata?.avatar_url}
+              alt={displayName}
             />
             <AvatarFallback>{initials}</AvatarFallback>
           </Avatar>
@@ -44,7 +48,8 @@ const UserMenu = () => {
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <div className="flex flex-col space-y-1 p-2">
-          <p className="text-sm font-medium leading-none">{user.email}</p>
+          <p className="text-sm font-medium leading-none">{displayName}</p>
+          <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
