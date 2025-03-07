@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -10,6 +9,7 @@ import { Plus, Trash2, Save, X } from 'lucide-react';
 import { Recipe, Ingredient, IngredientCategory } from '@/lib/types';
 import { createRecipe } from '@/lib/supabase';
 import { toast } from 'sonner';
+import { v4 as uuidv4 } from 'uuid';
 
 interface AddEditRecipeDialogProps {
   open: boolean;
@@ -17,7 +17,8 @@ interface AddEditRecipeDialogProps {
   onSuccess?: (recipe: Recipe) => void;
 }
 
-const emptyIngredient = (): Omit<Ingredient, 'id'> => ({
+const emptyIngredient = (): Ingredient => ({
+  id: uuidv4(),
   name: '',
   quantity: 1,
   unit: '',
@@ -41,7 +42,7 @@ const AddEditRecipeDialog: React.FC<AddEditRecipeDialogProps> = ({
   const [prepTime, setPrepTime] = useState(15);
   const [cookTime, setCookTime] = useState(30);
   const [imageUrl, setImageUrl] = useState('');
-  const [ingredients, setIngredients] = useState<Omit<Ingredient, 'id'>[]>([emptyIngredient()]);
+  const [ingredients, setIngredients] = useState<Ingredient[]>([emptyIngredient()]);
   const [instructions, setInstructions] = useState<string[]>(['']);
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
@@ -67,7 +68,7 @@ const AddEditRecipeDialog: React.FC<AddEditRecipeDialogProps> = ({
     setIngredients(ingredients.filter((_, i) => i !== index));
   };
 
-  const handleIngredientChange = (index: number, field: keyof Omit<Ingredient, 'id'>, value: any) => {
+  const handleIngredientChange = (index: number, field: keyof Ingredient, value: any) => {
     const newIngredients = [...ingredients];
     newIngredients[index] = {
       ...newIngredients[index],
@@ -120,7 +121,6 @@ const AddEditRecipeDialog: React.FC<AddEditRecipeDialogProps> = ({
     setIsSubmitting(true);
 
     try {
-      // Filter out empty instructions
       const filteredInstructions = instructions.filter(i => i.trim());
       
       const newRecipe: Omit<Recipe, 'id' | 'user_id' | 'created_at' | 'updated_at'> = {
