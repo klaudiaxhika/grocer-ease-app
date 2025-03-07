@@ -8,6 +8,9 @@ import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import Recipes from "./pages/Recipes";
 import MealPlanner from "./pages/MealPlanner";
+import Login from "./pages/Login";
+import { AuthProvider } from "./lib/auth-context";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
@@ -17,13 +20,30 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/recipes" element={<Recipes />} />
-          <Route path="/meal-planner" element={<MealPlanner />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
+        <AuthProvider>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/recipes" element={<Recipes />} />
+            <Route 
+              path="/meal-planner" 
+              element={
+                <ProtectedRoute>
+                  <MealPlanner />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/grocery-list" 
+              element={
+                <ProtectedRoute>
+                  <div>Grocery List</div>
+                </ProtectedRoute>
+              } 
+            />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </AuthProvider>
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

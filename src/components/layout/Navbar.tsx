@@ -4,6 +4,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, ShoppingCart, CalendarDays, BookOpen, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AnimatedContainer from '@/components/ui/AnimatedContainer';
+import UserMenu from './UserMenu';
 
 const Navbar: React.FC = () => {
   const location = useLocation();
@@ -48,10 +49,17 @@ const Navbar: React.FC = () => {
                 {item.label}
               </Link>
             ))}
+            
+            <div className="ml-4">
+              <UserMenu />
+            </div>
           </div>
           
           {/* Mobile menu button */}
           <div className="flex items-center md:hidden">
+            <div className="mr-2">
+              <UserMenu />
+            </div>
             <Button
               variant="ghost"
               size="icon"
