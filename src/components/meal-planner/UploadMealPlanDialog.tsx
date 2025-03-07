@@ -85,47 +85,37 @@ const UploadMealPlanDialog: React.FC<UploadMealPlanDialogProps> = ({
         formData.append('pdfFile', selectedFile);
       }
 
-      // Use fetch API directly instead of supabase.functions.invoke
-      // This allows us to properly send FormData with a file
-      const functionUrl = `${supabase.functions.url}/process-meal-plan`;
-      
-      // Get the current supabase auth token for authorization
+      // Get auth session for the token
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token || '';
       
-      const response = await fetch(functionUrl, {
+      // Properly call the Supabase Edge Function
+      const { data, error } = await supabase.functions.invoke('process-meal-plan', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'apikey': supabase.supabaseKey
+          'Content-Type': 'multipart/form-data',
+          'Authorization': `Bearer ${token}`
         },
         body: formData
       });
       
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`Server error: ${response.status} - ${errorText}`);
+      if (error) {
+        console.error('Edge function error:', error);
+        throw new Error(error.message || 'Failed to process meal plan');
       }
       
-      const result = await response.json();
-      
-      if (result.error) {
-        throw new Error(result.error);
-      }
-
-      const mealPlanData = result.data?.mealPlan;
-      if (!mealPlanData) {
+      if (!data?.mealPlan) {
         throw new Error('No meal plan data returned');
       }
 
-      console.log('Processed meal plan data:', mealPlanData);
+      console.log('Processed meal plan data:', data.mealPlan);
 
       // Transform the data into the format we need
       const recipes: Recipe[] = [];
       const mealPlans: Omit<MealPlan, 'id'>[] = [];
 
       // Process each meal plan entry
-      for (const entry of mealPlanData) {
+      for (const entry of data.mealPlan) {
         if (!entry.recipe || !entry.recipe.name) continue;
 
         // Create a recipe object

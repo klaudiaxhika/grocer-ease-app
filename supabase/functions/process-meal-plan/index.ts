@@ -18,15 +18,49 @@ serve(async (req) => {
       );
     }
 
-    const formData = await req.formData();
-    let mealPlanText = formData.get('mealPlanText')?.toString() || '';
-    const pdfFile = formData.get('pdfFile') as File | null;
-
-    // If a PDF file is provided, extract its text
-    if (pdfFile) {
+    // Check if the request is multipart/form-data
+    const contentType = req.headers.get('content-type') || '';
+    
+    let mealPlanText = '';
+    let pdfBuffer = null;
+    
+    // Handle both multipart/form-data and application/json
+    if (contentType.includes('multipart/form-data')) {
       try {
-        const arrayBuffer = await pdfFile.arrayBuffer();
-        const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+        const formData = await req.formData();
+        mealPlanText = formData.get('mealPlanText')?.toString() || '';
+        const pdfFile = formData.get('pdfFile') as File | null;
+        
+        // If a PDF file is provided, extract its text
+        if (pdfFile) {
+          try {
+            const arrayBuffer = await pdfFile.arrayBuffer();
+            pdfBuffer = arrayBuffer;
+          } catch (error) {
+            console.error('Error reading PDF file:', error);
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing form data:', error);
+        return new Response(
+          JSON.stringify({ error: 'Failed to parse form data' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        );
+      }
+    } else if (contentType.includes('application/json')) {
+      const json = await req.json();
+      mealPlanText = json.mealPlanText || '';
+    } else {
+      return new Response(
+        JSON.stringify({ error: 'Unsupported content type' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+    
+    // Process PDF if provided
+    if (pdfBuffer) {
+      try {
+        const pdf = await pdfjs.getDocument({ data: pdfBuffer }).promise;
         const numPages = pdf.numPages;
         
         let extractedText = '';
@@ -140,7 +174,7 @@ serve(async (req) => {
     }
 
     return new Response(
-      JSON.stringify({ data: mealPlanData }),
+      JSON.stringify(mealPlanData),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   } catch (error) {
