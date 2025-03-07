@@ -1,5 +1,5 @@
 
-import { Ingredient, Recipe, MealPlan, GroceryList, IngredientCategory } from './types';
+import { Ingredient, Recipe, MealPlan, GroceryList, IngredientCategory, GroceryItem } from './types';
 import { v4 as uuidv4 } from 'uuid';
 
 // Sample recipes
