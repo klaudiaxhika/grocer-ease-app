@@ -6,12 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Plus, Trash2, Save, X, Link, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Save, X, Link, Loader2, Sparkles } from 'lucide-react';
 import { Recipe, Ingredient, IngredientCategory } from '@/lib/types';
 import { createRecipe } from '@/lib/supabase';
 import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 import { supabase } from '@/integrations/supabase/client';
+import { Switch } from "@/components/ui/switch";
 
 interface AddEditRecipeDialogProps {
   open: boolean;
@@ -40,6 +41,7 @@ const AddEditRecipeDialog: React.FC<AddEditRecipeDialogProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [recipeUrl, setRecipeUrl] = useState('');
   const [isScrapingUrl, setIsScrapingUrl] = useState(false);
+  const [useAI, setUseAI] = useState(true);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [servings, setServings] = useState(2);
@@ -117,7 +119,7 @@ const AddEditRecipeDialog: React.FC<AddEditRecipeDialogProps> = ({
 
     try {
       const { data, error } = await supabase.functions.invoke('scrape-recipe', {
-        body: { url: recipeUrl }
+        body: { url: recipeUrl, useAI }
       });
 
       if (error) throw new Error(error.message);
@@ -150,7 +152,9 @@ const AddEditRecipeDialog: React.FC<AddEditRecipeDialogProps> = ({
         setInstructions(recipeData.instructions);
       }
 
-      toast.success('Recipe details imported successfully');
+      toast.success(useAI 
+        ? 'Recipe details imported successfully with AI assistance'
+        : 'Recipe details imported successfully');
     } catch (error) {
       console.error('Error scraping recipe:', error);
       toast.error(error.message || 'Failed to import recipe');
@@ -254,8 +258,20 @@ const AddEditRecipeDialog: React.FC<AddEditRecipeDialogProps> = ({
                 )}
               </Button>
             </div>
+            <div className="flex items-center space-x-2 mt-2">
+              <Switch 
+                id="use-ai" 
+                checked={useAI} 
+                onCheckedChange={setUseAI} 
+              />
+              <Label htmlFor="use-ai" className="cursor-pointer flex items-center">
+                <Sparkles className="h-4 w-4 mr-1 text-amber-500" />
+                Use AI to enhance recipe extraction
+              </Label>
+            </div>
             <p className="text-xs text-muted-foreground">
-              Paste a URL to a recipe page to attempt to extract recipe details automatically
+              Paste a URL to a recipe page to attempt to extract recipe details automatically. 
+              AI assistance can provide better results but may take slightly longer.
             </p>
           </div>
           
