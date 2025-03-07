@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -17,12 +16,6 @@ const Index = () => {
           <p className="text-lg md:text-xl text-foreground/80 max-w-2xl mb-8">
             Create grocery lists, plan your meals, and simplify your shopping experience.
           </p>
-          
-          <Button className="py-6 font-semibold text-lg px-8" asChild>
-            <Link to="/meal-planner">
-              Get Started
-            </Link>
-          </Button>
         </AnimatedContainer>
 
         <AnimatedContainer 
