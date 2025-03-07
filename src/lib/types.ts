@@ -54,15 +54,22 @@ export interface MealPlan {
   servings: number;
 }
 
-export interface GroceryItem extends Omit<Ingredient, 'id'> {
+export interface GroceryItem {
   id: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  category: IngredientCategory;
   checked: boolean;
-  recipes: string[]; // List of recipe names this ingredient is used in
+  recipe_sources: string[]; // List of recipe names this ingredient is used in
 }
 
 export interface GroceryList {
   id: string;
   name: string;
-  date: string;
+  start_date: string;
+  end_date: string;
   items: GroceryItem[];
+  created_at?: string;
+  updated_at?: string;
 }

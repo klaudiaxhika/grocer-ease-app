@@ -10,6 +10,7 @@ import Recipes from "./pages/Recipes";
 import MealPlanner from "./pages/MealPlanner";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
+import GroceryList from "./pages/GroceryList";
 import { AuthProvider } from "./lib/auth-context";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
@@ -46,7 +47,15 @@ const App = () => (
               path="/grocery-list" 
               element={
                 <ProtectedRoute>
-                  <div>Grocery List</div>
+                  <GroceryList />
+                </ProtectedRoute>
+              } 
+            />
+            <Route 
+              path="/grocery-list/:id" 
+              element={
+                <ProtectedRoute>
+                  <GroceryList />
                 </ProtectedRoute>
               } 
             />
