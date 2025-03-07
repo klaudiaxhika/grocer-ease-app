@@ -81,8 +81,9 @@ const UploadMealPlanDialog: React.FC<UploadMealPlanDialogProps> = ({
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token || '';
       
-      // Use direct fetch for FormData (supabase.functions.invoke doesn't handle FormData properly)
-      const functionUrl = `${supabase.functions.url}/process-meal-plan`;
+      // Get the URL for the process-meal-plan function
+      // We use a string template to construct the URL since we can't access the protected 'url' property
+      const functionUrl = `https://yilqlufqhjwszclncjdk.supabase.co/functions/v1/process-meal-plan`;
       
       let response;
       
@@ -98,7 +99,8 @@ const UploadMealPlanDialog: React.FC<UploadMealPlanDialogProps> = ({
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
-            'apikey': supabase.supabaseKey
+            // Using the project's anon key directly instead of accessing the protected supabaseKey
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpbHFsdWZxaGp3c3pjbG5jamRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEzNTUwOTksImV4cCI6MjA1NjkzMTA5OX0.msrgbjLs0wm_TimAXba31fd8mnaN7sAiFw8dAGSMSms'
           },
           body: formData
         });
@@ -108,7 +110,8 @@ const UploadMealPlanDialog: React.FC<UploadMealPlanDialogProps> = ({
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
-            'apikey': supabase.supabaseKey,
+            // Using the project's anon key directly instead of accessing the protected supabaseKey
+            'apikey': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpbHFsdWZxaGp3c3pjbG5jamRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEzNTUwOTksImV4cCI6MjA1NjkzMTA5OX0.msrgbjLs0wm_TimAXba31fd8mnaN7sAiFw8dAGSMSms',
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({ mealPlanText })
