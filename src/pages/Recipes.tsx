@@ -12,12 +12,14 @@ import RecipeSearchBar from '@/components/recipes/RecipeSearchBar';
 import { getRecipes } from '@/lib/supabase';
 import { useAuth } from '@/lib/auth-context';
 import { useQuery } from '@tanstack/react-query';
+import AddEditRecipeDialog from '@/components/recipes/AddEditRecipeDialog';
 
 const Recipes = () => {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [isRecipeDialogOpen, setIsRecipeDialogOpen] = useState(false);
+  const [isAddRecipeDialogOpen, setIsAddRecipeDialogOpen] = useState(false);
   
   // Fetch recipes using React Query
   const { data: recipesData, isLoading, isError, refetch } = useQuery({
@@ -48,6 +50,10 @@ const Recipes = () => {
     toast.success(`${recipe.name} added to meal planner`);
   };
 
+  const handleAddRecipeSuccess = () => {
+    refetch(); // Refresh the recipes list
+  };
+
   return (
     <AppLayout>
       <div className="mb-8">
@@ -57,7 +63,7 @@ const Recipes = () => {
             <p className="text-muted-foreground">Browse and manage your recipes.</p>
           </div>
           
-          <Button className="mt-4 md:mt-0">
+          <Button className="mt-4 md:mt-0" onClick={() => setIsAddRecipeDialogOpen(true)}>
             <Plus className="mr-2 h-4 w-4" />
             Add New Recipe
           </Button>
@@ -106,7 +112,7 @@ const Recipes = () => {
                   ? 'Try a different search term'
                   : 'You have no recipes yet'}
               </p>
-              <Button variant="outline">
+              <Button variant="outline" onClick={() => setIsAddRecipeDialogOpen(true)}>
                 Add Your First Recipe
               </Button>
             </div>
@@ -119,6 +125,12 @@ const Recipes = () => {
         open={isRecipeDialogOpen}
         onOpenChange={setIsRecipeDialogOpen}
         onAddToMealPlan={handleAddToMealPlan}
+      />
+
+      <AddEditRecipeDialog
+        open={isAddRecipeDialogOpen}
+        onOpenChange={setIsAddRecipeDialogOpen}
+        onSuccess={handleAddRecipeSuccess}
       />
     </AppLayout>
   );
