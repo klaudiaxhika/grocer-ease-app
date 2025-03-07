@@ -46,8 +46,8 @@ const GroceryItem: React.FC<GroceryItemProps> = ({
           {item.name}
         </p>
         <div className="text-xs text-muted-foreground truncate">
-          From: {item.recipes.slice(0, 2).join(', ')}
-          {item.recipes.length > 2 && ` +${item.recipes.length - 2} more`}
+          From: {item.recipe_sources.slice(0, 2).join(', ')}
+          {item.recipe_sources.length > 2 && ` +${item.recipe_sources.length - 2} more`}
         </div>
       </div>
       

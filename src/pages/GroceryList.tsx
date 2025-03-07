@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -5,7 +6,9 @@ import {
   getGroceryLists, 
   getGroceryList, 
   updateGroceryListItem, 
-  deleteGroceryList 
+  deleteGroceryList,
+  deleteGroceryListItem,
+  updateGroceryListItemQuantity 
 } from '@/lib/supabase';
 import { GroceryList, GroceryItem, IngredientCategory } from '@/lib/types';
 import AppLayout from '@/components/layout/AppLayout';
@@ -71,6 +74,30 @@ const GroceryListPage = () => {
       toast.error('Failed to update item');
     }
   });
+
+  const deleteItemMutation = useMutation({
+    mutationFn: (itemId: string) => deleteGroceryListItem(id!, itemId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['groceryList', id] });
+      toast.success('Item removed');
+    },
+    onError: (error) => {
+      console.error('Error deleting grocery item:', error);
+      toast.error('Failed to remove item');
+    }
+  });
+
+  const updateQuantityMutation = useMutation({
+    mutationFn: ({ itemId, quantity }: { itemId: string; quantity: number }) => 
+      updateGroceryListItemQuantity(id!, itemId, quantity),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['groceryList', id] });
+    },
+    onError: (error) => {
+      console.error('Error updating item quantity:', error);
+      toast.error('Failed to update quantity');
+    }
+  });
   
   const deleteListMutation = useMutation({
     mutationFn: deleteGroceryList,
@@ -96,6 +123,14 @@ const GroceryListPage = () => {
       ...item,
       checked: !item.checked
     });
+  };
+
+  const handleRemoveItem = (itemId: string) => {
+    deleteItemMutation.mutate(itemId);
+  };
+
+  const handleUpdateQuantity = (itemId: string, quantity: number) => {
+    updateQuantityMutation.mutate({ itemId, quantity });
   };
   
   const handleGenerateSuccess = (newList: GroceryList) => {
@@ -213,8 +248,8 @@ const GroceryListPage = () => {
                       category={category}
                       items={items}
                       onToggleItem={handleToggleItem}
-                      onRemoveItem={id => onRemoveItem(id)}
-                      onUpdateQuantity={(id, quantity) => handleUpdateQuantity(id, quantity)}
+                      onRemoveItem={handleRemoveItem}
+                      onUpdateQuantity={handleUpdateQuantity}
                     />
                   ))}
                 </div>

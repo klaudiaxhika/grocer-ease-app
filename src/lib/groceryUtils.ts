@@ -29,8 +29,8 @@ export const generateGroceryList = (mealPlan: MealPlan[]): GroceryList => {
         );
         
         // Add recipe to the list if not already included
-        if (!groceryItems[key].recipes.includes(meal.recipe.name)) {
-          groceryItems[key].recipes.push(meal.recipe.name);
+        if (!groceryItems[key].recipe_sources.includes(meal.recipe.name)) {
+          groceryItems[key].recipe_sources.push(meal.recipe.name);
         }
       } else {
         // Create new grocery item
@@ -45,7 +45,7 @@ export const generateGroceryList = (mealPlan: MealPlan[]): GroceryList => {
           unit: ingredient.unit,
           category: ingredient.category,
           checked: false,
-          recipes: [meal.recipe.name],
+          recipe_sources: [meal.recipe.name],
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         };
@@ -144,7 +144,7 @@ export const exportGroceryList = (list: GroceryList, format: 'text' | 'csv' = 't
     let output = 'Category,Item,Quantity,Unit,Recipes\n';
     
     list.items.forEach(item => {
-      output += `${item.category},${item.name},${formatQuantity(item.quantity)},${item.unit},"${item.recipes.join(', ')}"\n`;
+      output += `${item.category},${item.name},${formatQuantity(item.quantity)},${item.unit},"${item.recipe_sources.join(', ')}"\n`;
     });
     
     return output;

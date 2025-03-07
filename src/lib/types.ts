@@ -61,7 +61,7 @@ export interface GroceryItem {
   unit: string;
   category: IngredientCategory;
   checked: boolean;
-  recipes: string[]; // Changed from recipe_sources to recipes to match actual usage
+  recipe_sources: string[]; // Changed from recipes to recipe_sources to match database schema
   created_at?: string;
   updated_at?: string;
 }

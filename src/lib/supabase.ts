@@ -685,6 +685,82 @@ export async function updateGroceryListItem(listId: string, item: GroceryItem): 
   }
 }
 
+export async function deleteGroceryListItem(listId: string, itemId: string): Promise<{ 
+  success: boolean;
+  error: Error | null;
+}> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) throw new Error('Not authenticated');
+    
+    // First check if the user owns the list
+    const { data: listData, error: listError } = await supabase
+      .from('grocery_lists')
+      .select('id')
+      .eq('id', listId)
+      .eq('user_id', user.id)
+      .single();
+      
+    if (listError) throw listError;
+    
+    // Then delete the item
+    const { error } = await supabase
+      .from('grocery_items')
+      .delete()
+      .eq('id', itemId)
+      .eq('list_id', listId);
+      
+    if (error) throw error;
+    
+    return { success: true, error: null };
+  } catch (error) {
+    console.error('Error deleting grocery item:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error : new Error('Unknown error occurred') 
+    };
+  }
+}
+
+export async function updateGroceryListItemQuantity(listId: string, itemId: string, quantity: number): Promise<{ 
+  success: boolean;
+  error: Error | null;
+}> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (!user) throw new Error('Not authenticated');
+    
+    // First check if the user owns the list
+    const { data: listData, error: listError } = await supabase
+      .from('grocery_lists')
+      .select('id')
+      .eq('id', listId)
+      .eq('user_id', user.id)
+      .single();
+      
+    if (listError) throw listError;
+    
+    // Then update the item quantity
+    const { error } = await supabase
+      .from('grocery_items')
+      .update({ quantity, updated_at: new Date().toISOString() })
+      .eq('id', itemId)
+      .eq('list_id', listId);
+      
+    if (error) throw error;
+    
+    return { success: true, error: null };
+  } catch (error) {
+    console.error('Error updating grocery item quantity:', error);
+    return { 
+      success: false, 
+      error: error instanceof Error ? error : new Error('Unknown error occurred') 
+    };
+  }
+}
+
 export async function deleteGroceryList(id: string): Promise<{ 
   success: boolean;
   error: Error | null;
@@ -771,7 +847,9 @@ export async function generateGroceryList(startDate: Date, endDate: Date): Promi
             unit: ingredient.unit,
             category: ingredient.category,
             checked: false,
-            recipe_sources: [recipe.name]
+            recipe_sources: [recipe.name],
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
           });
         }
       }
