@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -17,12 +16,14 @@ import {
   Calendar,
   Trash2,
   CheckCheck,
-  ShoppingCart
+  ShoppingCart,
+  FileDown
 } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { Separator } from '@/components/ui/separator';
 import CategorySection from '@/components/grocery/CategorySection';
 import { toast } from 'sonner';
+import { exportGroceryListAsPDF } from '@/lib/pdfUtils';
 import { 
   AlertDialog,
   AlertDialogAction,
@@ -115,7 +116,6 @@ const GroceryListDetails: React.FC<GroceryListDetailsProps> = ({ groceryList, id
 
     const itemsInCategory = groceryList.items.filter(item => item.category === category);
     
-    // Update all items in this category
     itemsInCategory.forEach(item => {
       if (item.checked !== checked) {
         const updatedItem = { ...item, checked };
@@ -129,14 +129,11 @@ const GroceryListDetails: React.FC<GroceryListDetailsProps> = ({ groceryList, id
   const handleCheckAllItems = () => {
     if (!groceryList) return;
 
-    // Count total and checked items
     const totalItems = groceryList.items.length;
     const checkedItems = groceryList.items.filter(item => item.checked).length;
     
-    // Determine if we should check or uncheck all
     const shouldCheck = checkedItems < totalItems;
     
-    // Update all items
     groceryList.items.forEach(item => {
       if (item.checked !== shouldCheck) {
         const updatedItem = { ...item, checked: shouldCheck };
@@ -147,10 +144,19 @@ const GroceryListDetails: React.FC<GroceryListDetailsProps> = ({ groceryList, id
     toast.success(`${shouldCheck ? 'Checked' : 'Unchecked'} all items`);
   };
   
+  const handleExportToPDF = () => {
+    try {
+      exportGroceryListAsPDF(groceryList);
+      toast.success('Grocery list exported to PDF');
+    } catch (error) {
+      console.error('Error exporting to PDF:', error);
+      toast.error('Failed to export grocery list');
+    }
+  };
+  
   const startDate = parseISO(groceryList.start_date);
   const endDate = parseISO(groceryList.end_date);
   
-  // Calculate total checked items
   const totalItems = groceryList.items.length;
   const checkedItems = groceryList.items.filter(item => item.checked).length;
   const allItemsChecked = totalItems > 0 && checkedItems === totalItems;
@@ -196,6 +202,16 @@ const GroceryListDetails: React.FC<GroceryListDetailsProps> = ({ groceryList, id
           >
             <CheckCheck className="mr-2 h-4 w-4" />
             {allItemsChecked ? "Uncheck All" : "Check All"}
+          </Button>
+          
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportToPDF}
+            className="flex items-center"
+          >
+            <FileDown className="mr-2 h-4 w-4" />
+            Export PDF
           </Button>
           
           <AlertDialog>
