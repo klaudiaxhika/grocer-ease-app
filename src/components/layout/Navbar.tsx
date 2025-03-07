@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, ShoppingCart, CalendarDays, BookOpen, Home } from 'lucide-react';
+import { Menu, X, Utensils, CalendarDays, ShoppingCart, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AnimatedContainer from '@/components/ui/AnimatedContainer';
 import UserMenu from './UserMenu';
@@ -15,14 +15,14 @@ const Navbar: React.FC = () => {
   };
 
   const navItems = [
-    { path: '/', label: 'Home', icon: <Home size={18} /> },
+    { path: '/', label: 'Home', icon: <Utensils size={18} /> },
     { path: '/meal-planner', label: 'Meal Planner', icon: <CalendarDays size={18} /> },
     { path: '/grocery-list', label: 'Grocery List', icon: <ShoppingCart size={18} /> },
     { path: '/recipes', label: 'Recipes', icon: <BookOpen size={18} /> },
   ];
 
   return (
-    <nav className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b">
+    <nav className="bg-white/80 backdrop-blur-md sticky top-0 z-50 border-b border-amber-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
@@ -41,8 +41,8 @@ const Navbar: React.FC = () => {
                 to={item.path}
                 className={`inline-flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   location.pathname === item.path
-                    ? 'text-primary bg-primary/5'
-                    : 'text-gray-600 hover:text-primary hover:bg-primary/5'
+                    ? 'text-primary bg-amber-50'
+                    : 'text-gray-600 hover:text-primary hover:bg-amber-50'
                 }`}
               >
                 <span className="mr-1.5">{item.icon}</span>
@@ -89,8 +89,8 @@ const Navbar: React.FC = () => {
                   to={item.path}
                   className={`flex items-center px-3 py-3 rounded-md text-sm font-medium ${
                     location.pathname === item.path
-                      ? 'text-primary bg-primary/5'
-                      : 'text-gray-600 hover:text-primary hover:bg-primary/5'
+                      ? 'text-primary bg-amber-50'
+                      : 'text-gray-600 hover:text-primary hover:bg-amber-50'
                   }`}
                   onClick={() => setIsMenuOpen(false)}
                 >
