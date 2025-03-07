@@ -77,32 +77,50 @@ const UploadMealPlanDialog: React.FC<UploadMealPlanDialogProps> = ({
     setProcessingStatus('processing');
 
     try {
-      const formData = new FormData();
-      if (mealPlanText) {
-        formData.append('mealPlanText', mealPlanText);
-      }
-      if (selectedFile) {
-        formData.append('pdfFile', selectedFile);
-      }
-
       // Get auth session for the token
       const { data: { session } } = await supabase.auth.getSession();
       const token = session?.access_token || '';
       
-      // Properly call the Supabase Edge Function
-      const { data, error } = await supabase.functions.invoke('process-meal-plan', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${token}`
-        },
-        body: formData
-      });
+      // Use direct fetch for FormData (supabase.functions.invoke doesn't handle FormData properly)
+      const functionUrl = `${supabase.functions.url}/process-meal-plan`;
       
-      if (error) {
-        console.error('Edge function error:', error);
-        throw new Error(error.message || 'Failed to process meal plan');
+      let response;
+      
+      if (selectedFile) {
+        // If we have a file, we need to use FormData
+        const formData = new FormData();
+        if (mealPlanText) {
+          formData.append('mealPlanText', mealPlanText);
+        }
+        formData.append('pdfFile', selectedFile);
+        
+        response = await fetch(functionUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'apikey': supabase.supabaseKey
+          },
+          body: formData
+        });
+      } else {
+        // For text-only, we can use JSON
+        response = await fetch(functionUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'apikey': supabase.supabaseKey,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ mealPlanText })
+        });
       }
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Server error: ${response.status} - ${errorText}`);
+      }
+      
+      const data = await response.json();
       
       if (!data?.mealPlan) {
         throw new Error('No meal plan data returned');
