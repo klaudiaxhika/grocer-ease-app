@@ -53,8 +53,8 @@ serve(async (req) => {
                       {
                         "mealPlan": [
                           {
-                            "date": "YYYY-MM-DD", // Date if mentioned, otherwise null
-                            "mealType": "breakfast|lunch|dinner|snack", // Type of meal
+                            "date": "YYYY-MM-DD", // ISO string format, or null if not mentioned
+                            "mealType": "breakfast|lunch|dinner|snack", // Type of meal, default to dinner if unclear
                             "recipe": {
                               "name": "Recipe name",
                               "description": "Brief description if available",

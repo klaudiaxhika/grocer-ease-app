@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Loader2, Upload, FileText, Check, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { Recipe, MealPlan } from '@/lib/types';
+import { Recipe, MealPlan, MealType, WeekDay } from '@/lib/types';
 import { createRecipe } from '@/lib/supabase';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -39,6 +39,21 @@ const UploadMealPlanDialog: React.FC<UploadMealPlanDialogProps> = ({
     setIsProcessing(false);
     setProcessingStatus('idle');
     setExtractedData(null);
+  };
+
+  // Helper function to get weekday from date
+  const getWeekDay = (date: Date): WeekDay => {
+    const day = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+    // Ensure it's a valid WeekDay
+    return (day as WeekDay) || 'monday';
+  };
+
+  // Helper function to validate and convert meal type
+  const validateMealType = (type: string): MealType => {
+    const validTypes: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
+    return validTypes.includes(type as MealType) 
+      ? (type as MealType) 
+      : 'dinner'; // Default to dinner if invalid
   };
 
   const processMealPlan = async () => {
@@ -96,11 +111,11 @@ const UploadMealPlanDialog: React.FC<UploadMealPlanDialogProps> = ({
             r.name.toLowerCase() === recipe.name.toLowerCase()
           );
 
-          let recipeId: string;
+          let newRecipe: Recipe;
           
           if (existingRecipeIndex === -1) {
             // New recipe
-            const newRecipe = {
+            newRecipe = {
               ...recipe,
               id: crypto.randomUUID(),
               user_id: '00000000-0000-0000-0000-000000000000', // Placeholder, will be set on save
@@ -108,23 +123,23 @@ const UploadMealPlanDialog: React.FC<UploadMealPlanDialogProps> = ({
               updated_at: new Date().toISOString()
             };
             recipes.push(newRecipe);
-            recipeId = newRecipe.id;
           } else {
             // Use existing recipe
-            recipeId = recipes[existingRecipeIndex].id;
+            newRecipe = recipes[existingRecipeIndex];
           }
 
           // Create a meal plan entry if we have date and meal type
           if (entry.date || entry.mealType) {
             const date = entry.date ? new Date(entry.date) : new Date();
-            const mealType = entry.mealType || 'dinner';
+            const mealType = validateMealType(entry.mealType || 'dinner');
             
             mealPlans.push({
-              recipe_id: recipeId,
-              date,
+              recipe: newRecipe,
+              date: date.toISOString(), // Convert Date to string
               meal_type: mealType,
               servings: entry.recipe.servings || 2,
-              day: date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase()
+              day: getWeekDay(date), // Convert string to WeekDay type
+              mealType: mealType // Add this property to match the MealPlan type
             });
           }
         }

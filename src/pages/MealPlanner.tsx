@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { PlusCircle, Upload, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -24,15 +23,13 @@ const MealPlanner = () => {
   const [isUploadMealPlanOpen, setIsUploadMealPlanOpen] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
   
-  // Fetch meal plans from Supabase
   const { data: mealPlans, isLoading, isError } = useQuery({
     queryKey: ['mealPlans'],
     queryFn: getMealPlans,
     select: (data) => data.data || [],
-    enabled: !!user, // Only fetch if user is logged in
+    enabled: !!user,
   });
-  
-  // Create meal plan mutation
+
   const createMealPlanMutation = useMutation({
     mutationFn: createMealPlan,
     onSuccess: () => {
@@ -45,7 +42,6 @@ const MealPlanner = () => {
     }
   });
 
-  // Create recipe mutation
   const createRecipeMutation = useMutation({
     mutationFn: createRecipe,
     onSuccess: () => {
@@ -56,8 +52,7 @@ const MealPlanner = () => {
       toast.error('Failed to create recipe');
     }
   });
-  
-  // Update meal plan mutation
+
   const updateMealPlanMutation = useMutation({
     mutationFn: updateMealPlan,
     onSuccess: () => {
@@ -69,8 +64,7 @@ const MealPlanner = () => {
       toast.error('Failed to update meal');
     }
   });
-  
-  // Delete meal plan mutation
+
   const deleteMealPlanMutation = useMutation({
     mutationFn: deleteMealPlan,
     onSuccess: () => {
@@ -82,8 +76,7 @@ const MealPlanner = () => {
       toast.error('Failed to remove meal');
     }
   });
-  
-  // Filter meals for the selected date
+
   const mealsForSelectedDate = mealPlans?.filter(meal => {
     const mealDate = new Date(meal.date);
     return mealDate.toDateString() === selectedDate.toDateString();
@@ -114,37 +107,34 @@ const MealPlanner = () => {
 
     setIsImporting(true);
     try {
-      // First, create all the recipes
       const recipePromises = recipes.map(async (recipe) => {
-        // Remove fields that will be set by the server
         const { id, user_id, created_at, updated_at, ...recipeData } = recipe;
         
-        // Create the recipe
         const { data, error } = await createRecipeMutation.mutateAsync(recipeData);
         if (error) throw error;
         
-        // Return the created recipe ID and the original ID for mapping
         return { originalId: id, newId: data.id };
       });
       
       const createdRecipes = await Promise.all(recipePromises);
       
-      // Create a mapping from original recipe IDs to new recipe IDs
       const recipeIdMap = new Map(
         createdRecipes.map(r => [r.originalId, r.newId])
       );
       
-      // Now create all the meal plans, using the new recipe IDs
       const mealPlanPromises = mealPlans.map(async (mealPlan) => {
-        const newRecipeId = recipeIdMap.get(mealPlan.recipe_id);
+        const newRecipeId = recipeIdMap.get(mealPlan.recipe.id);
         if (!newRecipeId) {
-          console.error(`Could not find new ID for recipe ${mealPlan.recipe_id}`);
+          console.error(`Could not find new ID for recipe ${mealPlan.recipe.id}`);
           return;
         }
         
         const newMealPlan = {
-          ...mealPlan,
-          recipe_id: newRecipeId
+          recipe_id: newRecipeId,
+          date: mealPlan.date,
+          day: mealPlan.day,
+          meal_type: mealPlan.meal_type,
+          servings: mealPlan.servings
         };
         
         return createMealPlanMutation.mutateAsync(newMealPlan);
@@ -161,7 +151,6 @@ const MealPlanner = () => {
     }
   };
 
-  // Show loading state
   if (isLoading) {
     return (
       <AppLayout>
@@ -173,7 +162,6 @@ const MealPlanner = () => {
     );
   }
 
-  // Show error state
   if (isError) {
     return (
       <AppLayout>
