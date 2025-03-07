@@ -2,9 +2,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import AppLayout from '@/components/layout/AppLayout';
-import { ShoppingCart, CalendarDays, BookOpen, CheckCircle, Utensils, Clock, MapPin, Search } from 'lucide-react';
+import { ShoppingCart, CalendarDays, BookOpen, CheckCircle, Utensils } from 'lucide-react';
 import AnimatedContainer from '@/components/ui/AnimatedContainer';
 
 const Index = () => {
@@ -19,26 +18,11 @@ const Index = () => {
             Create grocery lists, plan your meals, and simplify your shopping experience.
           </p>
           
-          <div className="bg-white/95 rounded-lg p-4 shadow-lg border border-gray-200 backdrop-blur-sm">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-              <div className="relative col-span-1 md:col-span-2">
-                <MapPin className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                <Input 
-                  type="text" 
-                  placeholder="Enter your location" 
-                  className="pl-10 pr-4 py-6 bg-white border border-gray-200 rounded-md w-full"
-                />
-              </div>
-              <div className="col-span-1">
-                <Button className="w-full py-6 font-semibold" asChild>
-                  <Link to="/meal-planner">
-                    <Search className="mr-2 h-5 w-5" />
-                    Get Started
-                  </Link>
-                </Button>
-              </div>
-            </div>
-          </div>
+          <Button className="py-6 font-semibold text-lg px-8" asChild>
+            <Link to="/meal-planner">
+              Get Started
+            </Link>
+          </Button>
         </AnimatedContainer>
 
         <AnimatedContainer 
