@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { Ingredient, Recipe, MealPlan } from './types';
+import { Ingredient, Recipe, MealPlan, WeekDay, MealType } from './types';
 
 const supabaseUrl = 'https://yilqlufqhjwszclncjdk.supabase.co';
 const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InlpbHFsdWZxaGp3c3pjbG5jamRrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEzNTUwOTksImV4cCI6MjA1NjkzMTA5OX0.msrgbjLs0wm_TimAXba31fd8mnaN7sAiFw8dAGSMSms';
