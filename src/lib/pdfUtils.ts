@@ -33,8 +33,16 @@ export const generateGroceryListPDF = (groceryList: GroceryList): jsPDF => {
     return acc;
   }, {} as Record<IngredientCategory, GroceryItem[]>) || {} as Record<IngredientCategory, GroceryItem[]>;
   
+  // Count items statistics
+  const totalItems = groceryList.items.length;
+  const checkedItems = groceryList.items.filter(item => item.checked).length;
+  
+  // Add shopping progress
+  doc.setFontSize(11);
+  doc.text(`Shopping Progress: ${checkedItems}/${totalItems} items purchased`, pageWidth / 2, 40, { align: 'center' });
+  
   // Initialize y position for content
-  let yPos = 45;
+  let yPos = 50;
   
   // Loop through categories
   Object.entries(groupedItems).forEach(([category, items]) => {
@@ -55,7 +63,14 @@ export const generateGroceryListPDF = (groceryList: GroceryList): jsPDF => {
     doc.setFontSize(10);
     doc.setFont(undefined, 'normal');
     
-    items.forEach(item => {
+    // Sort items: unchecked first, then checked
+    const sortedItems = [...items].sort((a, b) => {
+      if (a.checked && !b.checked) return 1;
+      if (!a.checked && b.checked) return -1;
+      return 0;
+    });
+    
+    sortedItems.forEach(item => {
       // Check if we need a new page
       if (yPos > 270) {
         doc.addPage();
@@ -66,6 +81,14 @@ export const generateGroceryListPDF = (groceryList: GroceryList): jsPDF => {
       const quantity = `${formatQuantity(item.quantity)} ${item.unit}`;
       
       doc.text(checkBox, 20, yPos);
+      
+      // Apply strikethrough for checked items
+      if (item.checked) {
+        doc.setTextColor(128, 128, 128); // Grey color for checked items
+      } else {
+        doc.setTextColor(0, 0, 0); // Black for unchecked items
+      }
+      
       doc.text(item.name, 30, yPos);
       doc.text(quantity, pageWidth - 50, yPos);
       
@@ -76,6 +99,9 @@ export const generateGroceryListPDF = (groceryList: GroceryList): jsPDF => {
         doc.text(recipesText, 30, yPos + 4);
         doc.setFontSize(10);
       }
+      
+      // Reset text color
+      doc.setTextColor(0, 0, 0);
       
       yPos += item.recipe_sources.length > 0 ? 10 : 6;
     });
