@@ -8,8 +8,6 @@ import { Loader2, Upload, FileText, Check, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { Recipe, MealPlan, MealType, WeekDay } from '@/lib/types';
-import { createRecipe } from '@/lib/supabase';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface UploadMealPlanDialogProps {
   open: boolean;
@@ -23,19 +21,32 @@ const UploadMealPlanDialog: React.FC<UploadMealPlanDialogProps> = ({
   onSuccess
 }) => {
   const [mealPlanText, setMealPlanText] = useState('');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingStatus, setProcessingStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
   const [extractedData, setExtractedData] = useState<{
     recipes: Recipe[];
-    mealPlans: Omit<MealPlan, 'id'>[];
+    mealPlans: Omit<MealPlan, 'id'>[]; 
   } | null>(null);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setMealPlanText(e.target.value);
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      if (file.type === 'application/pdf') {
+        setSelectedFile(file);
+      } else {
+        toast.error('Please upload a PDF file');
+      }
+    }
+  };
+
   const resetForm = () => {
     setMealPlanText('');
+    setSelectedFile(null);
     setIsProcessing(false);
     setProcessingStatus('idle');
     setExtractedData(null);
@@ -43,9 +54,8 @@ const UploadMealPlanDialog: React.FC<UploadMealPlanDialogProps> = ({
 
   // Helper function to get weekday from date
   const getWeekDay = (date: Date): WeekDay => {
-    const day = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
-    // Ensure it's a valid WeekDay
-    return (day as WeekDay) || 'monday';
+    const day = date.toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase() as WeekDay;
+    return day || 'monday';
   };
 
   // Helper function to validate and convert meal type
@@ -53,12 +63,12 @@ const UploadMealPlanDialog: React.FC<UploadMealPlanDialogProps> = ({
     const validTypes: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
     return validTypes.includes(type as MealType) 
       ? (type as MealType) 
-      : 'dinner'; // Default to dinner if invalid
+      : 'dinner';
   };
 
   const processMealPlan = async () => {
-    if (!mealPlanText.trim()) {
-      toast.error('Please enter meal plan text to process');
+    if (!mealPlanText && !selectedFile) {
+      toast.error('Please enter meal plan text or upload a PDF file');
       return;
     }
 
@@ -66,9 +76,16 @@ const UploadMealPlanDialog: React.FC<UploadMealPlanDialogProps> = ({
     setProcessingStatus('processing');
 
     try {
-      // Call the Edge Function to process the meal plan
+      const formData = new FormData();
+      if (mealPlanText) {
+        formData.append('mealPlanText', mealPlanText);
+      }
+      if (selectedFile) {
+        formData.append('pdfFile', selectedFile);
+      }
+
       const { data, error } = await supabase.functions.invoke('process-meal-plan', {
-        body: { mealPlanText }
+        body: formData
       });
 
       if (error) throw new Error(error.message);
@@ -86,7 +103,8 @@ const UploadMealPlanDialog: React.FC<UploadMealPlanDialogProps> = ({
         if (!entry.recipe || !entry.recipe.name) continue;
 
         // Create a recipe object
-        const recipe: Omit<Recipe, 'id' | 'user_id' | 'created_at' | 'updated_at'> = {
+        const recipe: Recipe = {
+          id: crypto.randomUUID(),
           name: entry.recipe.name,
           description: entry.recipe.description || '',
           ingredients: entry.recipe.ingredients?.map(ing => ({
@@ -101,7 +119,10 @@ const UploadMealPlanDialog: React.FC<UploadMealPlanDialogProps> = ({
           prep_time: entry.recipe.prepTime || 15,
           cook_time: entry.recipe.cookTime || 30,
           tags: [],
-          image_url: ''
+          image_url: '',
+          user_id: '00000000-0000-0000-0000-000000000000',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         };
 
         // Add recipe to our collection if it has ingredients
@@ -111,21 +132,8 @@ const UploadMealPlanDialog: React.FC<UploadMealPlanDialogProps> = ({
             r.name.toLowerCase() === recipe.name.toLowerCase()
           );
 
-          let newRecipe: Recipe;
-          
           if (existingRecipeIndex === -1) {
-            // New recipe
-            newRecipe = {
-              ...recipe,
-              id: crypto.randomUUID(),
-              user_id: '00000000-0000-0000-0000-000000000000', // Placeholder, will be set on save
-              created_at: new Date().toISOString(),
-              updated_at: new Date().toISOString()
-            };
-            recipes.push(newRecipe);
-          } else {
-            // Use existing recipe
-            newRecipe = recipes[existingRecipeIndex];
+            recipes.push(recipe);
           }
 
           // Create a meal plan entry if we have date and meal type
@@ -134,12 +142,11 @@ const UploadMealPlanDialog: React.FC<UploadMealPlanDialogProps> = ({
             const mealType = validateMealType(entry.mealType || 'dinner');
             
             mealPlans.push({
-              recipe: newRecipe,
-              date: date.toISOString(), // Convert Date to string
-              meal_type: mealType,
+              recipe,
+              date: date.toISOString(),
+              day: getWeekDay(date),
+              mealType,
               servings: entry.recipe.servings || 2,
-              day: getWeekDay(date), // Convert string to WeekDay type
-              mealType: mealType // Add this property to match the MealPlan type
             });
           }
         }
@@ -175,7 +182,7 @@ const UploadMealPlanDialog: React.FC<UploadMealPlanDialogProps> = ({
         <DialogHeader>
           <DialogTitle>Upload Meal Plan</DialogTitle>
           <DialogDescription>
-            Paste your meal plan text and our AI will extract recipes and meal schedule.
+            Upload a PDF file or paste your meal plan text and our AI will extract recipes and meal schedule.
           </DialogDescription>
         </DialogHeader>
 
@@ -183,6 +190,9 @@ const UploadMealPlanDialog: React.FC<UploadMealPlanDialogProps> = ({
           <TabsList className="mb-4">
             <TabsTrigger value="text">
               <FileText className="h-4 w-4 mr-2" /> Text Input
+            </TabsTrigger>
+            <TabsTrigger value="pdf">
+              <Upload className="h-4 w-4 mr-2" /> PDF Upload
             </TabsTrigger>
           </TabsList>
 
@@ -199,39 +209,66 @@ const UploadMealPlanDialog: React.FC<UploadMealPlanDialogProps> = ({
                 Tip: The more detailed your meal plan, the better the AI can extract recipe information.
               </p>
             </div>
+          </TabsContent>
 
-            {processingStatus === 'error' && (
-              <Alert variant="destructive">
-                <AlertCircle className="h-4 w-4" />
-                <AlertDescription>
-                  There was an error processing your meal plan. Please try again with more detailed text.
-                </AlertDescription>
-              </Alert>
-            )}
-
-            {processingStatus === 'success' && extractedData && (
-              <div className="space-y-4">
-                <Alert>
-                  <Check className="h-4 w-4" />
-                  <AlertDescription>
-                    Successfully extracted {extractedData.recipes.length} recipes and {extractedData.mealPlans.length} meal plan entries.
-                  </AlertDescription>
-                </Alert>
-                
-                <div className="bg-muted p-4 rounded-md">
-                  <h3 className="font-medium mb-2">Extracted Recipes:</h3>
-                  <ul className="list-disc pl-5 space-y-1">
-                    {extractedData.recipes.map((recipe, index) => (
-                      <li key={index}>{recipe.name} ({recipe.ingredients.length} ingredients)</li>
-                    ))}
-                  </ul>
-                </div>
+          <TabsContent value="pdf" className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex items-center justify-center w-full">
+                <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed rounded-lg cursor-pointer bg-muted/50 hover:bg-muted">
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <Upload className="w-8 h-8 mb-2 text-muted-foreground" />
+                    <p className="mb-2 text-sm text-muted-foreground">
+                      {selectedFile ? selectedFile.name : 'Click to upload a PDF file'}
+                    </p>
+                  </div>
+                  <input
+                    type="file"
+                    className="hidden"
+                    accept=".pdf"
+                    onChange={handleFileChange}
+                    disabled={isProcessing || processingStatus === 'success'}
+                  />
+                </label>
               </div>
-            )}
+              <p className="text-xs text-muted-foreground">
+                Upload a PDF file containing your meal plan. The AI will extract all recipes and schedules.
+              </p>
+            </div>
           </TabsContent>
         </Tabs>
 
-        <DialogFooter className="pt-4 space-x-2">
+        {processingStatus === 'error' && (
+          <div className="mt-4">
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                There was an error processing your meal plan. Please try again with more detailed text.
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+
+        {processingStatus === 'success' && extractedData && (
+          <div className="mt-4 space-y-4">
+            <Alert>
+              <Check className="h-4 w-4" />
+              <AlertDescription>
+                Successfully extracted {extractedData.recipes.length} recipes and {extractedData.mealPlans.length} meal plan entries.
+              </AlertDescription>
+            </Alert>
+            
+            <div className="bg-muted p-4 rounded-md">
+              <h3 className="font-medium mb-2">Extracted Recipes:</h3>
+              <ul className="list-disc pl-5 space-y-1">
+                {extractedData.recipes.map((recipe, index) => (
+                  <li key={index}>{recipe.name} ({recipe.ingredients.length} ingredients)</li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
+
+        <DialogFooter className="mt-6 space-x-2">
           <Button
             variant="outline"
             onClick={() => onOpenChange(false)}
@@ -243,7 +280,7 @@ const UploadMealPlanDialog: React.FC<UploadMealPlanDialogProps> = ({
           {processingStatus !== 'success' ? (
             <Button 
               onClick={processMealPlan} 
-              disabled={isProcessing || !mealPlanText.trim()}
+              disabled={isProcessing || (!mealPlanText && !selectedFile)}
             >
               {isProcessing ? (
                 <>

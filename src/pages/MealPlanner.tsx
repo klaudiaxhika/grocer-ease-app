@@ -109,18 +109,13 @@ const MealPlanner = () => {
     try {
       const recipePromises = recipes.map(async (recipe) => {
         const { id, user_id, created_at, updated_at, ...recipeData } = recipe;
-        
         const { data, error } = await createRecipeMutation.mutateAsync(recipeData);
         if (error) throw error;
-        
         return { originalId: id, newId: data.id };
       });
       
       const createdRecipes = await Promise.all(recipePromises);
-      
-      const recipeIdMap = new Map(
-        createdRecipes.map(r => [r.originalId, r.newId])
-      );
+      const recipeIdMap = new Map(createdRecipes.map(r => [r.originalId, r.newId]));
       
       const mealPlanPromises = mealPlans.map(async (mealPlan) => {
         const newRecipeId = recipeIdMap.get(mealPlan.recipe.id);
@@ -129,11 +124,11 @@ const MealPlanner = () => {
           return;
         }
         
-        const newMealPlan = {
-          recipe_id: newRecipeId,
+        const newMealPlan: Omit<MealPlan, 'id'> = {
+          recipe: { ...mealPlan.recipe, id: newRecipeId },
           date: mealPlan.date,
           day: mealPlan.day,
-          meal_type: mealPlan.meal_type,
+          mealType: mealPlan.mealType,
           servings: mealPlan.servings
         };
         

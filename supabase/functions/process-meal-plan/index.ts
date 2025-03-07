@@ -1,6 +1,7 @@
 
 import { serve } from "https://deno.land/std@0.182.0/http/server.ts";
 import { corsHeaders } from "../_shared/cors.ts";
+import * as pdfjs from "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/+esm";
 
 serve(async (req) => {
   // Handle CORS preflight requests
@@ -13,15 +14,42 @@ serve(async (req) => {
     if (!openAiKey) {
       return new Response(
         JSON.stringify({ error: 'OpenAI API key not configured' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
+        { headers: { ...corsHeaders, '⁣Content-Type': 'application/json' }, status: 500 }
       );
     }
 
-    const { mealPlanText } = await req.json();
-    
+    const formData = await req.formData();
+    let mealPlanText = formData.get('mealPlanText')?.toString() || '';
+    const pdfFile = formData.get('pdfFile') as File | null;
+
+    // If a PDF file is provided, extract its text
+    if (pdfFile) {
+      try {
+        const arrayBuffer = await pdfFile.arrayBuffer();
+        const pdf = await pdfjs.getDocument({ data: arrayBuffer }).promise;
+        const numPages = pdf.numPages;
+        
+        let extractedText = '';
+        for (let i = 1; i <= numPages; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items.map((item: any) => item.str).join(' ');
+          extractedText += pageText + '\n';
+        }
+        
+        mealPlanText = extractedText;
+      } catch (error) {
+        console.error('Error parsing PDF:', error);
+        return new Response(
+          JSON.stringify({ error: 'Failed to parse PDF file' }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+        );
+      }
+    }
+
     if (!mealPlanText) {
       return new Response(
-        JSON.stringify({ error: 'No meal plan text provided' }),
+        JSON.stringify({ error: 'No meal plan text or PDF provided' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
