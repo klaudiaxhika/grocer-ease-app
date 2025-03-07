@@ -118,10 +118,7 @@ const GroceryListPage = () => {
   };
   
   const handleToggleItem = (item: GroceryItem) => {
-    updateItemMutation.mutate({
-      ...item,
-      checked: !item.checked
-    });
+    updateItemMutation.mutate(item);
   };
 
   const handleRemoveItem = (itemId: string) => {

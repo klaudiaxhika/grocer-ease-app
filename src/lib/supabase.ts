@@ -659,7 +659,20 @@ export async function updateGroceryListItem(listId: string, item: GroceryItem): 
     
     if (!user) throw new Error('Not authenticated');
     
-    const { error } = await supabase
+    // First check if the user owns the list
+    const { data: listData, error: listError } = await supabase
+      .from('grocery_lists')
+      .select('id')
+      .eq('id', listId)
+      .eq('user_id', user.id)
+      .single();
+      
+    if (listError) throw listError;
+    
+    console.log("Updating item:", item.id, "checked:", item.checked); // Debug log
+    
+    // Then update the item
+    const { data, error } = await supabase
       .from('grocery_items')
       .update({
         name: item.name,
@@ -671,9 +684,12 @@ export async function updateGroceryListItem(listId: string, item: GroceryItem): 
         updated_at: new Date().toISOString()
       })
       .eq('id', item.id)
-      .eq('list_id', listId);
+      .eq('list_id', listId)
+      .select();
       
     if (error) throw error;
+    
+    console.log("Update successful, new item state:", data); // Debug log
     
     return { success: true, error: null };
   } catch (error) {
