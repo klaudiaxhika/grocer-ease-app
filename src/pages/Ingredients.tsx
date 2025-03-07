@@ -14,6 +14,8 @@ import { toast } from 'sonner';
 import { v4 as uuidv4 } from 'uuid';
 import AnimatedContainer from '@/components/ui/AnimatedContainer';
 
+const STANDALONE_RECIPE_ID = '00000000-0000-0000-0000-000000000000'; // Using a fixed UUID for standalone ingredients
+
 const Ingredients = () => {
   const queryClient = useQueryClient();
   const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(null);
@@ -44,7 +46,13 @@ const Ingredients = () => {
     mutationFn: async (ingredient: Omit<Ingredient, 'id' | 'created_at' | 'updated_at'>) => {
       const { data, error } = await supabase
         .from('ingredients')
-        .insert([ingredient])
+        .insert({
+          name: ingredient.name,
+          quantity: ingredient.quantity,
+          unit: ingredient.unit,
+          category: ingredient.category,
+          recipe_id: STANDALONE_RECIPE_ID // Add the required recipe_id field
+        })
         .select()
         .single();
       
@@ -123,11 +131,11 @@ const Ingredients = () => {
     }
 
     addIngredientMutation.mutate({
-      id: uuidv4(),
       name: newIngredient.name,
       quantity: newIngredient.quantity || 1,
       unit: newIngredient.unit || '',
       category: newIngredient.category || 'other',
+      recipe_id: STANDALONE_RECIPE_ID, // Add the required recipe_id field for the mutation
     } as Ingredient);
   };
 
