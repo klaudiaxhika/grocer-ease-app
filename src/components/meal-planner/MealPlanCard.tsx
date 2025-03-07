@@ -22,7 +22,7 @@ const mealTypeColor: Record<MealType, string> = {
 
 const MealPlanCard: React.FC<MealPlanCardProps> = ({ mealPlan, onEdit, onDelete }) => {
   const { recipe, mealType, servings } = mealPlan;
-  const totalTime = recipe.prepTime + recipe.cookTime;
+  const totalTime = recipe.prep_time + recipe.cook_time;
   
   const capitalizedMealType = mealType.charAt(0).toUpperCase() + mealType.slice(1);
   
@@ -31,9 +31,9 @@ const MealPlanCard: React.FC<MealPlanCardProps> = ({ mealPlan, onEdit, onDelete 
       <Card className="overflow-hidden transition-all hover:shadow-md">
         <CardHeader className="p-0">
           <div className="relative h-36 bg-gray-100 overflow-hidden">
-            {recipe.image ? (
+            {recipe.image_url ? (
               <img 
-                src={recipe.image} 
+                src={recipe.image_url} 
                 alt={recipe.name} 
                 className="w-full h-full object-cover"
               />

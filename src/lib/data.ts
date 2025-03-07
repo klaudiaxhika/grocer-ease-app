@@ -1,3 +1,4 @@
+
 import { Ingredient, Recipe, MealPlan, GroceryList, IngredientCategory, GroceryItem } from './types';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -8,8 +9,8 @@ export const sampleRecipes: Recipe[] = [
     name: 'Classic Omelette',
     description: 'A simple and delicious breakfast option.',
     servings: 1,
-    prepTime: 5,
-    cookTime: 10,
+    prep_time: 5,
+    cook_time: 10,
     ingredients: [
       { id: uuidv4(), name: 'Eggs', quantity: 3, unit: 'large', category: 'dairy' },
       { id: uuidv4(), name: 'Milk', quantity: 2, unit: 'tbsp', category: 'dairy' },
@@ -35,8 +36,8 @@ export const sampleRecipes: Recipe[] = [
     name: 'Chicken Caesar Salad',
     description: 'A classic Caesar salad with grilled chicken.',
     servings: 2,
-    prepTime: 15,
-    cookTime: 15,
+    prep_time: 15,
+    cook_time: 15,
     ingredients: [
       { id: uuidv4(), name: 'Chicken Breast', quantity: 1, unit: 'large', category: 'meat' },
       { id: uuidv4(), name: 'Romaine Lettuce', quantity: 1, unit: 'head', category: 'produce' },
@@ -64,8 +65,8 @@ export const sampleRecipes: Recipe[] = [
     name: 'Spaghetti Bolognese',
     description: 'Classic Italian pasta with meat sauce.',
     servings: 4,
-    prepTime: 15,
-    cookTime: 45,
+    prep_time: 15,
+    cook_time: 45,
     ingredients: [
       { id: uuidv4(), name: 'Ground Beef', quantity: 1, unit: 'pound', category: 'meat' },
       { id: uuidv4(), name: 'Spaghetti', quantity: 1, unit: 'pound', category: 'dry goods' },
@@ -103,8 +104,8 @@ export const sampleRecipes: Recipe[] = [
     name: 'Greek Yogurt with Berries',
     description: 'A simple, healthy snack with protein and antioxidants.',
     servings: 1,
-    prepTime: 5,
-    cookTime: 0,
+    prep_time: 5,
+    cook_time: 0,
     ingredients: [
       { id: uuidv4(), name: 'Greek Yogurt', quantity: 1, unit: 'cup', category: 'dairy' },
       { id: uuidv4(), name: 'Mixed Berries', quantity: 0.5, unit: 'cup', category: 'produce' },
