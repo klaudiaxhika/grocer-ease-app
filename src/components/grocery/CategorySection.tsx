@@ -1,10 +1,11 @@
 
 import React from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, Check, CheckCheck } from 'lucide-react';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import GroceryItem from './GroceryItem';
 import { GroceryItem as GroceryItemType, IngredientCategory } from '@/lib/types';
 import AnimatedContainer from '@/components/ui/AnimatedContainer';
+import { Button } from '@/components/ui/button';
 
 interface CategorySectionProps {
   category: string;
@@ -12,6 +13,7 @@ interface CategorySectionProps {
   onToggleItem: (item: GroceryItemType) => void;
   onRemoveItem?: (id: string) => void;
   onUpdateQuantity?: (id: string, quantity: number) => void;
+  onCheckAllInCategory?: (category: string, checked: boolean) => void;
 }
 
 const CategorySection: React.FC<CategorySectionProps> = ({
@@ -19,7 +21,8 @@ const CategorySection: React.FC<CategorySectionProps> = ({
   items,
   onToggleItem,
   onRemoveItem = () => {},
-  onUpdateQuantity = () => {}
+  onUpdateQuantity = () => {},
+  onCheckAllInCategory = () => {}
 }) => {
   const [isOpen, setIsOpen] = React.useState(true);
   
@@ -27,7 +30,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({
   const checkedCount = items.filter(item => item.checked).length;
   
   // Determine if all items are checked
-  const allChecked = checkedCount === items.length;
+  const allChecked = checkedCount === items.length && items.length > 0;
   
   // Progress percentage
   const progressPercentage = items.length > 0 
@@ -36,6 +39,10 @@ const CategorySection: React.FC<CategorySectionProps> = ({
     
   // Format category name
   const categoryName = category.charAt(0).toUpperCase() + category.slice(1);
+  
+  const handleCheckAll = () => {
+    onCheckAllInCategory(category, !allChecked);
+  };
   
   return (
     <AnimatedContainer animation="fade-up" className="mb-4">
@@ -49,11 +56,26 @@ const CategorySection: React.FC<CategorySectionProps> = ({
             </span>
           </div>
           
-          <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
-            <div 
-              className={`h-full ${allChecked ? 'bg-secondary' : 'bg-primary'}`}
-              style={{ width: `${progressPercentage}%` }}
-            ></div>
+          <div className="flex items-center gap-2">
+            <div className="w-24 h-2 bg-gray-100 rounded-full overflow-hidden">
+              <div 
+                className={`h-full ${allChecked ? 'bg-secondary' : 'bg-primary'}`}
+                style={{ width: `${progressPercentage}%` }}
+              ></div>
+            </div>
+            
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="h-8 px-2"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleCheckAll();
+              }} 
+              title={allChecked ? "Uncheck all items" : "Check all items"}
+            >
+              {allChecked ? <Check className="h-4 w-4" /> : <CheckCheck className="h-4 w-4" />}
+            </Button>
           </div>
         </CollapsibleTrigger>
         

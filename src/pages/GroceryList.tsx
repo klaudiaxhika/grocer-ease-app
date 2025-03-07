@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -22,7 +23,8 @@ import {
   Loader2, 
   ArrowLeft,
   Calendar,
-  Trash2
+  Trash2,
+  CheckCheck
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { format, parseISO } from 'date-fns';
@@ -128,6 +130,43 @@ const GroceryListPage = () => {
   const handleUpdateQuantity = (itemId: string, quantity: number) => {
     updateQuantityMutation.mutate({ itemId, quantity });
   };
+
+  const handleCheckAllInCategory = (category: string, checked: boolean) => {
+    if (!groceryList) return;
+
+    const itemsInCategory = groceryList.items.filter(item => item.category === category);
+    
+    // Update all items in this category
+    itemsInCategory.forEach(item => {
+      if (item.checked !== checked) {
+        const updatedItem = { ...item, checked };
+        updateItemMutation.mutate(updatedItem);
+      }
+    });
+
+    toast.success(`${checked ? 'Checked' : 'Unchecked'} all items in ${category}`);
+  };
+
+  const handleCheckAllItems = () => {
+    if (!groceryList) return;
+
+    // Count total and checked items
+    const totalItems = groceryList.items.length;
+    const checkedItems = groceryList.items.filter(item => item.checked).length;
+    
+    // Determine if we should check or uncheck all
+    const shouldCheck = checkedItems < totalItems;
+    
+    // Update all items
+    groceryList.items.forEach(item => {
+      if (item.checked !== shouldCheck) {
+        const updatedItem = { ...item, checked: shouldCheck };
+        updateItemMutation.mutate(updatedItem);
+      }
+    });
+
+    toast.success(`${shouldCheck ? 'Checked' : 'Unchecked'} all items`);
+  };
   
   const handleGenerateSuccess = (newList: GroceryList) => {
     queryClient.invalidateQueries({ queryKey: ['groceryLists'] });
@@ -172,6 +211,11 @@ const GroceryListPage = () => {
     const startDate = parseISO(groceryList.start_date);
     const endDate = parseISO(groceryList.end_date);
     
+    // Calculate total checked items
+    const totalItems = groceryList.items.length;
+    const checkedItems = groceryList.items.filter(item => item.checked).length;
+    const allItemsChecked = totalItems > 0 && checkedItems === totalItems;
+    
     return (
       <AppLayout>
         <AnimatedContainer animation="fade-up" className="mb-6">
@@ -196,26 +240,38 @@ const GroceryListPage = () => {
               </div>
             </div>
             
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm">
-                  <Trash2 className="mr-2 h-4 w-4" /> Delete List
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    This will permanently delete this grocery list and all its items.
-                    This action cannot be undone.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDeleteList}>Delete</AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <div className="flex space-x-2">
+              <Button 
+                variant={allItemsChecked ? "outline" : "default"} 
+                size="sm"
+                onClick={handleCheckAllItems}
+                className="flex items-center"
+              >
+                <CheckCheck className="mr-2 h-4 w-4" />
+                {allItemsChecked ? "Uncheck All" : "Check All"}
+              </Button>
+              
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm">
+                    <Trash2 className="mr-2 h-4 w-4" /> Delete List
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This will permanently delete this grocery list and all its items.
+                      This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDeleteList}>Delete</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </div>
           
           <Card>
@@ -223,7 +279,7 @@ const GroceryListPage = () => {
               <CardTitle className="flex justify-between items-center">
                 <span>Shopping List</span>
                 <span className="text-sm font-normal text-muted-foreground">
-                  {groceryList.items.filter(item => item.checked).length} of {groceryList.items.length} items checked
+                  {checkedItems} of {totalItems} items checked
                 </span>
               </CardTitle>
             </CardHeader>
@@ -246,6 +302,7 @@ const GroceryListPage = () => {
                       onToggleItem={handleToggleItem}
                       onRemoveItem={handleRemoveItem}
                       onUpdateQuantity={handleUpdateQuantity}
+                      onCheckAllInCategory={handleCheckAllInCategory}
                     />
                   ))}
                 </div>
