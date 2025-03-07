@@ -1,114 +1,138 @@
 
 import React from 'react';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Button } from '@/components/ui/button';
-import { PlusCircle } from 'lucide-react';
-import MealCard from './MealCard';
-import { MealPlan, MealType, WeekDay } from '@/lib/types';
-import AnimatedContainer from '@/components/ui/AnimatedContainer';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { MealPlan, MealType } from '@/lib/types';
 
 interface WeeklyCalendarProps {
-  mealPlan: MealPlan[];
-  onAddMeal: (day: WeekDay, mealType: MealType) => void;
-  onEditMeal: (meal: MealPlan) => void;
-  onDeleteMeal: (mealId: string) => void;
+  selectedDate: Date;
+  onSelectDate: (date: Date) => void;
+  mealPlans: MealPlan[];
 }
 
-const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({
-  mealPlan,
-  onAddMeal,
-  onEditMeal,
-  onDeleteMeal
+// Define the colors for meal types
+const mealIndicatorColors: Record<MealType, string> = {
+  breakfast: 'bg-blue-400',
+  lunch: 'bg-green-400',
+  dinner: 'bg-purple-400',
+  snack: 'bg-yellow-400'
+};
+
+const WeeklyCalendar: React.FC<WeeklyCalendarProps> = ({ 
+  selectedDate, 
+  onSelectDate, 
+  mealPlans 
 }) => {
-  const weekDays: WeekDay[] = [
-    'monday', 
-    'tuesday', 
-    'wednesday', 
-    'thursday', 
-    'friday', 
-    'saturday', 
-    'sunday'
-  ];
-
-  const mealTypes: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack'];
-
-  const formatDay = (day: WeekDay): string => {
-    return day.charAt(0).toUpperCase() + day.slice(1);
+  // Get the current day and calculate the start of the week (Sunday)
+  const today = new Date();
+  const currentDay = new Date(selectedDate);
+  const dayOfWeek = currentDay.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  
+  // Move to the start of the week (Sunday)
+  const startOfWeek = new Date(currentDay);
+  startOfWeek.setDate(currentDay.getDate() - dayOfWeek);
+  
+  // Generate an array of 7 days starting from the start of the week
+  const daysOfWeek = [...Array(7)].map((_, i) => {
+    const date = new Date(startOfWeek);
+    date.setDate(startOfWeek.getDate() + i);
+    return date;
+  });
+  
+  // Function to navigate to previous week
+  const goToPreviousWeek = () => {
+    const newDate = new Date(startOfWeek);
+    newDate.setDate(startOfWeek.getDate() - 7);
+    onSelectDate(newDate);
   };
-
-  const getMealsForDayAndType = (day: WeekDay, mealType: MealType): MealPlan[] => {
-    return mealPlan.filter(meal => meal.day === day && meal.mealType === mealType);
+  
+  // Function to navigate to next week
+  const goToNextWeek = () => {
+    const newDate = new Date(startOfWeek);
+    newDate.setDate(startOfWeek.getDate() + 7);
+    onSelectDate(newDate);
   };
-
+  
+  // Function to get meal indicators for a specific date
+  const getMealIndicators = (date: Date) => {
+    const mealsOnDate = mealPlans.filter(meal => {
+      const mealDate = new Date(meal.date);
+      return mealDate.toDateString() === date.toDateString();
+    });
+    
+    const mealTypes = mealsOnDate.map(meal => meal.mealType);
+    // Remove duplicates
+    return [...new Set(mealTypes)];
+  };
+  
+  // Format the month and year for the header
+  const formattedMonth = startOfWeek.toLocaleDateString('en-US', { month: 'long' });
+  const formattedYear = startOfWeek.getFullYear();
+  
+  // Check if the end of the week is in a different month
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6);
+  const endFormattedMonth = endOfWeek.toLocaleDateString('en-US', { month: 'long' });
+  
+  // Create a header string
+  const headerString = formattedMonth === endFormattedMonth
+    ? `${formattedMonth} ${formattedYear}`
+    : `${formattedMonth} - ${endFormattedMonth} ${formattedYear}`;
+  
   return (
-    <div className="bg-white rounded-lg overflow-hidden border">
-      <div className="flex items-center justify-between border-b p-4">
-        <h2 className="text-lg font-medium">Weekly Meal Plan</h2>
+    <div className="w-full">
+      <div className="flex justify-between items-center mb-4">
+        <Button variant="outline" size="icon" onClick={goToPreviousWeek}>
+          <ChevronLeft className="h-4 w-4" />
+        </Button>
+        <h3 className="text-lg font-medium">{headerString}</h3>
+        <Button variant="outline" size="icon" onClick={goToNextWeek}>
+          <ChevronRight className="h-4 w-4" />
+        </Button>
       </div>
       
-      <ScrollArea className="h-[calc(100vh-200px)]">
-        <div className="p-4">
-          {weekDays.map((day, dayIndex) => (
-            <AnimatedContainer 
-              key={day} 
-              animation="fade-up" 
-              delay={dayIndex === 0 ? 'none' : dayIndex === 1 ? 'stagger-1' : dayIndex === 2 ? 'stagger-2' : 'stagger-3'}
-              className="mb-8"
+      <div className="grid grid-cols-7 gap-2">
+        {daysOfWeek.map((date, i) => {
+          const dayString = date.toLocaleDateString('en-US', { weekday: 'short' });
+          const dayNum = date.getDate();
+          const isToday = date.toDateString() === today.toDateString();
+          const isSelected = date.toDateString() === selectedDate.toDateString();
+          const mealTypes = getMealIndicators(date);
+          
+          return (
+            <Button
+              key={i}
+              variant="ghost"
+              className={`h-auto flex flex-col items-center py-2 px-0 gap-1 rounded-lg ${
+                isSelected ? 'bg-primary/10 text-primary' : ''
+              } ${
+                isToday && !isSelected ? 'border border-primary/30' : ''
+              }`}
+              onClick={() => onSelectDate(date)}
             >
-              <div className="flex items-center mb-3">
-                <h3 className="text-base font-medium">{formatDay(day)}</h3>
-                <div className="h-px flex-1 bg-gray-100 ml-3"></div>
-              </div>
+              <span className="text-xs font-medium">{dayString}</span>
+              <span className={`flex items-center justify-center w-8 h-8 rounded-full ${
+                isToday ? 'bg-primary text-primary-foreground' : ''
+              }`}>
+                {dayNum}
+              </span>
               
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {mealTypes.map(mealType => {
-                  const mealsForType = getMealsForDayAndType(day, mealType);
-                  
-                  return (
-                    <div key={`${day}-${mealType}`} className="space-y-3">
-                      <div className="flex items-center justify-between">
-                        <h4 className="text-sm text-muted-foreground capitalize">{mealType}</h4>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="h-6 px-2"
-                          onClick={() => onAddMeal(day, mealType)}
-                        >
-                          <PlusCircle size={14} className="mr-1" />
-                          <span className="text-xs">Add</span>
-                        </Button>
-                      </div>
-                      
-                      {mealsForType.length > 0 ? (
-                        mealsForType.map(meal => (
-                          <MealCard 
-                            key={meal.id} 
-                            meal={meal} 
-                            onEdit={onEditMeal} 
-                            onDelete={onDeleteMeal} 
-                          />
-                        ))
-                      ) : (
-                        <div className="border border-dashed rounded-lg p-4 flex flex-col items-center justify-center h-32 text-center">
-                          <p className="text-sm text-muted-foreground">No meals added</p>
-                          <Button
-                            variant="link"
-                            size="sm"
-                            className="h-auto p-0 mt-1"
-                            onClick={() => onAddMeal(day, mealType)}
-                          >
-                            <span className="text-xs">Add meal</span>
-                          </Button>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </AnimatedContainer>
-          ))}
-        </div>
-      </ScrollArea>
+              {/* Meal type indicators */}
+              {mealTypes.length > 0 && (
+                <div className="flex space-x-1 mt-1">
+                  {mealTypes.map((type, index) => (
+                    <div 
+                      key={index}
+                      className={`w-2 h-2 rounded-full ${mealIndicatorColors[type]}`} 
+                      title={type.charAt(0).toUpperCase() + type.slice(1)}
+                    />
+                  ))}
+                </div>
+              )}
+            </Button>
+          );
+        })}
+      </div>
     </div>
   );
 };
