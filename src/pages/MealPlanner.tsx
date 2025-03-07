@@ -1,18 +1,19 @@
 
 import React, { useState } from 'react';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Upload, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/components/layout/AppLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import AnimatedContainer from '@/components/ui/AnimatedContainer';
 import WeeklyCalendar from '@/components/meal-planner/WeeklyCalendar';
-import { MealPlan } from '@/lib/types';
+import { MealPlan, Recipe } from '@/lib/types';
 import MealPlanCard from '@/components/meal-planner/MealPlanCard';
 import { toast } from 'sonner';
 import AddMealDialog from '@/components/meal-planner/AddMealDialog';
+import UploadMealPlanDialog from '@/components/meal-planner/UploadMealPlanDialog';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getMealPlans, createMealPlan, updateMealPlan, deleteMealPlan } from '@/lib/supabase';
-import { Loader2 } from 'lucide-react';
+import { getMealPlans, createMealPlan, updateMealPlan, deleteMealPlan, createRecipe } from '@/lib/supabase';
+import { Loader2 as Loader } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 
 const MealPlanner = () => {
@@ -20,6 +21,8 @@ const MealPlanner = () => {
   const queryClient = useQueryClient();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [isAddMealOpen, setIsAddMealOpen] = useState(false);
+  const [isUploadMealPlanOpen, setIsUploadMealPlanOpen] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
   
   // Fetch meal plans from Supabase
   const { data: mealPlans, isLoading, isError } = useQuery({
@@ -39,6 +42,18 @@ const MealPlanner = () => {
     onError: (error) => {
       console.error('Error creating meal plan:', error);
       toast.error('Failed to add meal to plan');
+    }
+  });
+
+  // Create recipe mutation
+  const createRecipeMutation = useMutation({
+    mutationFn: createRecipe,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['recipes'] });
+    },
+    onError: (error) => {
+      console.error('Error creating recipe:', error);
+      toast.error('Failed to create recipe');
     }
   });
   
@@ -91,12 +106,67 @@ const MealPlanner = () => {
     updateMealPlanMutation.mutate(updatedMeal);
   };
 
+  const handleImportMealPlan = async (recipes: Recipe[], mealPlans: Omit<MealPlan, 'id'>[]) => {
+    if (!user) {
+      toast.error('You must be logged in to import meal plans');
+      return;
+    }
+
+    setIsImporting(true);
+    try {
+      // First, create all the recipes
+      const recipePromises = recipes.map(async (recipe) => {
+        // Remove fields that will be set by the server
+        const { id, user_id, created_at, updated_at, ...recipeData } = recipe;
+        
+        // Create the recipe
+        const { data, error } = await createRecipeMutation.mutateAsync(recipeData);
+        if (error) throw error;
+        
+        // Return the created recipe ID and the original ID for mapping
+        return { originalId: id, newId: data.id };
+      });
+      
+      const createdRecipes = await Promise.all(recipePromises);
+      
+      // Create a mapping from original recipe IDs to new recipe IDs
+      const recipeIdMap = new Map(
+        createdRecipes.map(r => [r.originalId, r.newId])
+      );
+      
+      // Now create all the meal plans, using the new recipe IDs
+      const mealPlanPromises = mealPlans.map(async (mealPlan) => {
+        const newRecipeId = recipeIdMap.get(mealPlan.recipe_id);
+        if (!newRecipeId) {
+          console.error(`Could not find new ID for recipe ${mealPlan.recipe_id}`);
+          return;
+        }
+        
+        const newMealPlan = {
+          ...mealPlan,
+          recipe_id: newRecipeId
+        };
+        
+        return createMealPlanMutation.mutateAsync(newMealPlan);
+      });
+      
+      await Promise.all(mealPlanPromises);
+      
+      toast.success(`Successfully imported ${recipes.length} recipes and ${mealPlans.length} meal plans`);
+    } catch (error) {
+      console.error('Error importing meal plan:', error);
+      toast.error('Failed to import meal plan');
+    } finally {
+      setIsImporting(false);
+    }
+  };
+
   // Show loading state
   if (isLoading) {
     return (
       <AppLayout>
         <div className="flex items-center justify-center h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <Loader className="h-8 w-8 animate-spin text-primary" />
           <span className="ml-2 text-lg">Loading your meal plans...</span>
         </div>
       </AppLayout>
@@ -123,9 +193,28 @@ const MealPlanner = () => {
       <AnimatedContainer animation="fade-up" className="mb-6">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl md:text-3xl font-bold">Meal Planner</h1>
-          <Button onClick={() => setIsAddMealOpen(true)}>
-            <PlusCircle className="mr-2 h-4 w-4" /> Add Meal
-          </Button>
+          <div className="flex space-x-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsUploadMealPlanOpen(true)}
+              disabled={isImporting}
+            >
+              {isImporting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Importing...
+                </>
+              ) : (
+                <>
+                  <Upload className="mr-2 h-4 w-4" />
+                  Import Meal Plan
+                </>
+              )}
+            </Button>
+            <Button onClick={() => setIsAddMealOpen(true)}>
+              <PlusCircle className="mr-2 h-4 w-4" /> Add Meal
+            </Button>
+          </div>
         </div>
 
         <Card>
@@ -174,6 +263,12 @@ const MealPlanner = () => {
         onAddMeal={handleAddMeal}
         selectedDate={selectedDate}
         availableRecipes={[]} // This prop is no longer used as we fetch recipes in the dialog
+      />
+
+      <UploadMealPlanDialog
+        open={isUploadMealPlanOpen}
+        onOpenChange={setIsUploadMealPlanOpen}
+        onSuccess={handleImportMealPlan}
       />
     </AppLayout>
   );
