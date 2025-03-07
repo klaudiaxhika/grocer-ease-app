@@ -37,7 +37,11 @@ const GroceryItem: React.FC<GroceryItemProps> = ({
     >
       <Checkbox 
         checked={item.checked}
-        onCheckedChange={(checked) => onToggleChecked(item.id, checked as boolean)}
+        onCheckedChange={(checked) => {
+          if (typeof checked === 'boolean') {
+            onToggleChecked(item.id, checked);
+          }
+        }}
         className="mr-3"
       />
       
